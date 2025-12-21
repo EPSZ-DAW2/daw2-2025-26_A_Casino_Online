@@ -9,6 +9,7 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use app\models\SignupForm;
 
 class SiteController extends Controller
 {
@@ -82,6 +83,23 @@ class SiteController extends Controller
 
         $model->password = '';
         return $this->render('login', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Registro de nuevos usuarios.
+     * @return mixed
+     */
+    public function actionSignup()
+    {
+        $model = new SignupForm();
+        if ($model->load(Yii::$app->request->post()) && $model->signup()) {
+            Yii::$app->session->setFlash('success', 'Gracias por registrarte. Por favor inicia sesión.');
+            return $this->redirect(['site/login']);
+        }
+
+        return $this->render('signup', [
             'model' => $model,
         ]);
     }
