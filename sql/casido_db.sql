@@ -11,7 +11,7 @@ USE casino_db;
 CREATE TABLE usuario (
     id INT AUTO_INCREMENT PRIMARY KEY,
     -- Autenticación y Seguridad Yii2
-    nick VARCHAR(50) NOT NULL UNIQUE COMMENT 'Requisito: Nick único [cite: 100]',
+    nick VARCHAR(50) NOT NULL UNIQUE COMMENT 'Requisito: Nick único',
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     auth_key VARCHAR(32) NOT NULL COMMENT 'Clave de autenticación para "Recordarme" en Yii2',
@@ -24,10 +24,10 @@ CREATE TABLE usuario (
     apellido VARCHAR(50),
     telefono VARCHAR(20),
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-    avatar_url VARCHAR(255) DEFAULT 'default_avatar.png' COMMENT 'Requisito: Avatar personalizable [cite: 33]',
+    avatar_url VARCHAR(255) DEFAULT 'default_avatar.png' COMMENT 'Requisito: Avatar personalizable',
     
     -- Estado, VIP y Verificación
-    nivel_vip ENUM('Bronce', 'Plata', 'Oro') DEFAULT 'Bronce' COMMENT 'Requisito: Nivel VIP [cite: 101]',
+    nivel_vip ENUM('Bronce', 'Plata', 'Oro') DEFAULT 'Bronce' COMMENT 'Requisito: Nivel VIP',
     puntos_progreso INT DEFAULT 0 COMMENT 'Barra de progreso visual',
     estado_cuenta ENUM('Activo', 'Bloqueado') DEFAULT 'Activo',
     estado_verificacion ENUM('Pendiente', 'Verificado', 'Rechazado') DEFAULT 'Pendiente',
@@ -47,7 +47,7 @@ CREATE TABLE usuario (
 CREATE TABLE monedero (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
-    saldo_real DECIMAL(10, 2) DEFAULT 0.00 COMMENT 'Dinero retirable [cite: 104]',
+    saldo_real DECIMAL(10, 2) DEFAULT 0.00 COMMENT 'Dinero retirable',
     saldo_bono DECIMAL(10, 2) DEFAULT 0.00 COMMENT 'Dinero bloqueado/promocional',
     divisa VARCHAR(3) DEFAULT 'EUR',
     
@@ -58,7 +58,7 @@ CREATE TABLE transaccion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
     tipo_operacion ENUM('Deposito', 'Retirada', 'Apuesta', 'Premio', 'Comision_Afiliado') NOT NULL,
-    categoria ENUM('Slots', 'Ruleta', 'Cartas', 'Banco') COMMENT 'Para gráficas de gasto [cite: 42]',
+    categoria ENUM('Slots', 'Ruleta', 'Cartas', 'Banco') COMMENT 'Para gráficas de gasto',
     cantidad DECIMAL(10, 2) NOT NULL,
     metodo_pago VARCHAR(50) COMMENT 'Visa, Bizum, Crypto',
     referencia_externa VARCHAR(100) NULL COMMENT 'ID de transacción de la pasarela de pago',
@@ -73,12 +73,12 @@ CREATE TABLE transaccion (
 CREATE TABLE juego (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    proveedor VARCHAR(50) NOT NULL COMMENT 'NetEnt, Playtech, etc. [cite: 107]',
+    proveedor VARCHAR(50) NOT NULL COMMENT 'NetEnt, Playtech, etc.',
     tipo ENUM('Slot', 'Ruleta', 'Cartas') NOT NULL,
     tematica VARCHAR(50) COMMENT 'Egipto, Futuro, etc.',
     rtp DECIMAL(5, 2) NOT NULL COMMENT 'Porcentaje de retorno teórico',
     url_caratula VARCHAR(255) COMMENT 'Para el Grid visual',
-    activo TINYINT(1) DEFAULT 1 COMMENT 'Interruptor Activo/Inactivo [cite: 75]',
+    activo TINYINT(1) DEFAULT 1 COMMENT 'Interruptor Activo/Inactivo',
     es_nuevo TINYINT(1) DEFAULT 0 COMMENT 'Etiqueta Nuevo',
     en_mantenimiento TINYINT(1) DEFAULT 0,
     tasa_pago_actual DECIMAL(5, 2) DEFAULT 0 COMMENT 'Estadística Hot/Cold',
@@ -91,7 +91,7 @@ CREATE TABLE historial_partida (
     id_juego INT NOT NULL,
     cantidad_apostada DECIMAL(10, 2) NOT NULL,
     cantidad_ganada DECIMAL(10, 2) NOT NULL,
-    detalle_tecnico JSON COMMENT 'Cartas exactas o número salido [cite: 109]',
+    detalle_tecnico JSON COMMENT 'Cartas exactas o número salido',
     fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_partida_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE CASCADE,
@@ -105,7 +105,7 @@ CREATE TABLE torneo (
     id_juego_asociado INT NOT NULL,
     fecha_inicio DATETIME NOT NULL,
     fecha_fin DATETIME NOT NULL,
-    coste_entrada DECIMAL(10, 2) DEFAULT 0 COMMENT 'Buy-in [cite: 111]',
+    coste_entrada DECIMAL(10, 2) DEFAULT 0,
     bolsa_premios DECIMAL(10, 2) DEFAULT 0 COMMENT 'Premios garantizados',
     estado ENUM('Abierto', 'En Curso', 'Finalizado', 'Cancelado') DEFAULT 'Abierto',
     
@@ -129,7 +129,7 @@ CREATE TABLE log_visita (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
     direccion_ip VARCHAR(45) NOT NULL,
-    dispositivo VARCHAR(100) COMMENT 'Móvil/PC [cite: 114]',
+    dispositivo VARCHAR(255),
     fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_visita_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE CASCADE
@@ -170,7 +170,7 @@ CREATE TABLE mesa_privada (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_anfitrion INT NOT NULL,
     tipo_juego VARCHAR(50),
-    contrasena_acceso VARCHAR(255) COMMENT 'Para partidas cerradas [cite: 95]',
+    contrasena_acceso VARCHAR(255) COMMENT 'Para partidas cerradas',
     estado_mesa ENUM('Abierta', 'Jugando', 'Cerrada') DEFAULT 'Abierta',
     
     CONSTRAINT fk_mesa_anfitrion FOREIGN KEY (id_anfitrion) REFERENCES usuario(id) ON DELETE CASCADE
@@ -181,7 +181,7 @@ CREATE TABLE mensaje_chat (
     id_mesa INT NULL COMMENT 'Si es NULL, es chat global o de soporte',
     id_usuario INT NOT NULL,
     mensaje TEXT NOT NULL,
-    es_ofensivo TINYINT(1) DEFAULT 0 COMMENT 'Marcado por filtro de palabras [cite: 96]',
+    es_ofensivo TINYINT(1) DEFAULT 0 COMMENT 'Marcado por filtro de palabras',
     fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_chat_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE CASCADE,
