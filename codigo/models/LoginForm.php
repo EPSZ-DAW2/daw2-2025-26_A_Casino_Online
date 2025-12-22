@@ -61,7 +61,21 @@ class LoginForm extends Model
     public function login()
     {
         if ($this->validate()) {
-            return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600*24*30 : 0);
+            // Logueamos al usuario
+            $loginExitoso = Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600*24*30 : 0);
+            
+            if ($loginExitoso) {
+                // --- NUEVO: REGISTRO DE VISITA (Requisito Seguridad) ---
+                // Insertamos directamente en la tabla usando SQL nativo por rapidez
+                Yii::$app->db->createCommand()->insert('log_visita', [
+                    'id_usuario' => $this->getUser()->id,
+                    'direccion_ip' => Yii::$app->request->userIP,
+                    'dispositivo' => $_SERVER['HTTP_USER_AGENT'] ?? 'Desconocido', // Navegador/SO
+                    'fecha_hora' => new \yii\db\Expression('NOW()'),
+                ])->execute();
+            }
+
+            return $loginExitoso;
         }
         return false;
     }

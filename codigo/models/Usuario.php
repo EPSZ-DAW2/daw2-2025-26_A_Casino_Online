@@ -175,6 +175,16 @@ class Usuario extends ActiveRecord implements IdentityInterface
         return $this->hasOne(Usuario::class, ['id' => 'id_padrino']);
     }
 
+    /**
+     * Relación para obtener el historial de accesos de este usuario.
+     */
+    public function getLogsVisitas()
+    {
+        // Ordenamos por fecha descendente para ver los últimos primero
+        return $this->hasMany(\app\models\LogVisita::class, ['id_usuario' => 'id'])
+                    ->orderBy(['fecha_hora' => SORT_DESC])
+                    ->limit(10); // Solo mostramos las últimas 10 para no saturar
+    }
 
     // -----------------------------------------------
     // Sistema para controlar los permisos
@@ -206,12 +216,31 @@ class Usuario extends ActiveRecord implements IdentityInterface
     {
         return $this->esAdmin(); 
     }
+
+    /**
+     * Devuelve true SOLO si el usuario ha subido DNI y el admin lo ha validado.
+     * Útil para G2 (Retiradas) y G1 (Visualización).
+     */
+    public function esVerificado()
+    {
+        return $this->estado_verificacion === 'Verificado';
+    }
     
     /**
      * Verifica si el usuario puede jugar (no está bloqueado/baneado).
      */
     public function puedeJugar()
     {
-        return $this->estado_cuenta === 'Activo';
+        // Si está bloqueado, fuera.
+        if ($this->estado_cuenta !== 'Activo') {
+            return false;
+        }
+
+        // Si no está verificado, tampoco juega.
+        if (!$this->esVerificado()) {
+            return false;
+        }
+
+        return true;
     }
 }

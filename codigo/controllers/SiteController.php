@@ -10,6 +10,7 @@ use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
 use app\models\SignupForm;
+use yii\web\UploadedFile;
 
 class SiteController extends Controller
 {
@@ -142,5 +143,66 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
+    }
+
+    /**
+     * Muestra el perfil del usuario, su barra VIP y permite editar datos.
+     */
+    public function actionPerfil()
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['login']);
+        }
+
+        /** @var \app\models\Usuario $model */
+        $model = Yii::$app->user->identity;
+        
+        if ($this->request->isPost && $model->load($this->request->post())) {
+            
+            // --- 1. Lógica del Avatar ---
+            $archivoAvatar = \yii\web\UploadedFile::getInstance($model, 'avatar_url');
+            if ($archivoAvatar) {
+                $nombreArchivo = 'avatar_' . $model->id . '_' . uniqid() . '.' . $archivoAvatar->extension;
+                if ($archivoAvatar->saveAs('uploads/' . $nombreArchivo)) {
+                    $model->avatar_url = $nombreArchivo;
+                }
+            }
+
+            // --- 2. Lógica de Documentos (DNI y Selfie) ---
+            $archivoDNI = \yii\web\UploadedFile::getInstance($model, 'foto_dni');
+            $archivoSelfie = \yii\web\UploadedFile::getInstance($model, 'foto_selfie');
+            $documentosSubidos = false;
+
+            if ($archivoDNI) {
+                $nombreDNI = 'dni_' . $model->id . '_' . uniqid() . '.' . $archivoDNI->extension;
+                if ($archivoDNI->saveAs('uploads/' . $nombreDNI)) {
+                    $model->foto_dni = $nombreDNI;
+                    $documentosSubidos = true;
+                }
+            }
+
+            if ($archivoSelfie) {
+                $nombreSelfie = 'selfie_' . $model->id . '_' . uniqid() . '.' . $archivoSelfie->extension;
+                if ($archivoSelfie->saveAs('uploads/' . $nombreSelfie)) {
+                    $model->foto_selfie = $nombreSelfie;
+                    $documentosSubidos = true;
+                }
+            }
+
+            // Si subió documentos nuevos, cambiamos estado a "Pendiente" para que el Admin lo revise
+            if ($documentosSubidos) {
+                $model->estado_verificacion = 'Pendiente';
+            }
+
+            // Guardamos todo
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Perfil actualizado. Si has subido documentos, serán revisados pronto.');
+                return $this->refresh();
+            }
+        }
+
+        return $this->render('perfil', [
+            'model' => $model,
+        ]);
     }
 }
