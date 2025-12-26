@@ -65,7 +65,6 @@ class LoginForm extends Model
             $loginExitoso = Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600*24*30 : 0);
             
             if ($loginExitoso) {
-                // --- NUEVO: REGISTRO DE VISITA (Requisito Seguridad) ---
                 // Insertamos directamente en la tabla usando SQL nativo por rapidez
                 Yii::$app->db->createCommand()->insert('log_visita', [
                     'id_usuario' => $this->getUser()->id,

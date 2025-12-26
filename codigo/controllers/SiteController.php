@@ -159,7 +159,7 @@ class SiteController extends Controller
         
         if ($this->request->isPost && $model->load($this->request->post())) {
             
-            // --- 1. Lógica del Avatar ---
+            // --- Lógica del Avatar ---
             $archivoAvatar = \yii\web\UploadedFile::getInstance($model, 'avatar_url');
             if ($archivoAvatar) {
                 $nombreArchivo = 'avatar_' . $model->id . '_' . uniqid() . '.' . $archivoAvatar->extension;
@@ -168,7 +168,7 @@ class SiteController extends Controller
                 }
             }
 
-            // --- 2. Lógica de Documentos (DNI y Selfie) ---
+            // --- Lógica de Documentos (DNI y Selfie) ---
             $archivoDNI = \yii\web\UploadedFile::getInstance($model, 'foto_dni');
             $archivoSelfie = \yii\web\UploadedFile::getInstance($model, 'foto_selfie');
             $documentosSubidos = false;

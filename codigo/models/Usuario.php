@@ -105,7 +105,7 @@ class Usuario extends ActiveRecord implements IdentityInterface
     }
 
     // ------------------------------------------------------------
-    // MÉTODOS IDENTITY INTERFACE (Necesarios para el Login)
+    // MÉTODOS Necesarios para el Login
 
     public static function findIdentity($id)
     {
@@ -218,8 +218,7 @@ class Usuario extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * Devuelve true SOLO si el usuario ha subido DNI y el admin lo ha validado.
-     * Útil para G2 (Retiradas) y G1 (Visualización).
+     * Devuelve true SOLO si  el admin lo ha validado.
      */
     public function esVerificado()
     {
