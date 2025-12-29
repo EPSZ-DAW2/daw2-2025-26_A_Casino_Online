@@ -5,24 +5,26 @@ namespace app\models;
 use Yii;
 
 /**
- * This is the model class for table "log_visita".
+ * This is the model class for table "alerta_fraude".
  *
  * @property int $id
- * @property int $id_usuario
- * @property string $direccion_ip
- * @property string|null $dispositivo
- * @property string|null $fecha_hora
+ * @property int|null $id_usuario
+ * @property string $tipo Colusión, Bot, Chip Dumping
+ * @property string|null $nivel_riesgo
+ * @property string|null $estado
+ * @property string|null $detalles_tecnicos
+ * @property string|null $fecha_detectada
  *
  * @property Usuario $usuario
  */
-class LogVisita extends \yii\db\ActiveRecord
+class AlertaFraude extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'log_visita';
+        return 'alerta_fraude';
     }
 
     /**
@@ -31,11 +33,11 @@ class LogVisita extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_usuario', 'direccion_ip'], 'required'],
             [['id_usuario'], 'integer'],
-            [['fecha_hora'], 'safe'],
-            [['direccion_ip'], 'string', 'max' => 45],
-            [['dispositivo'], 'string', 'max' => 255],
+            [['tipo'], 'required'],
+            [['nivel_riesgo', 'estado', 'detalles_tecnicos'], 'string'],
+            [['fecha_detectada'], 'safe'],
+            [['tipo'], 'string', 'max' => 50],
             [['id_usuario'], 'exist', 'skipOnError' => true, 'targetClass' => Usuario::class, 'targetAttribute' => ['id_usuario' => 'id']],
         ];
     }
@@ -48,9 +50,11 @@ class LogVisita extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'id_usuario' => 'Id Usuario',
-            'direccion_ip' => 'Direccion Ip',
-            'dispositivo' => 'Dispositivo',
-            'fecha_hora' => 'Fecha Hora',
+            'tipo' => 'Tipo',
+            'nivel_riesgo' => 'Nivel Riesgo',
+            'estado' => 'Estado',
+            'detalles_tecnicos' => 'Detalles Tecnicos',
+            'fecha_detectada' => 'Fecha Detectada',
         ];
     }
 
