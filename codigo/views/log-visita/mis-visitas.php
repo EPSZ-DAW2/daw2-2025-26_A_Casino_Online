@@ -17,48 +17,53 @@ $this->title = 'Mis Accesos y Seguridad';
         <div class="card-body">
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
-                // Quitamos el 'filterModel' para que quede más limpio visualmente para el usuario
-                'summary' => '', // Ocultamos el texto "Mostrando 1-10 de..."
-                'tableOptions' => ['class' => 'table table-hover table-striped'], // Estilo visual limpio
+                'summary' => '',
+                'tableOptions' => ['class' => 'table table-hover table-striped'],
                 'columns' => [
-                    // Columna 1: Icono visual (Cumpliendo requisito W5)
+                    // Columna 1: Icono
                     [
                         'label' => 'Dispositivo',
                         'format' => 'raw',
                         'value' => function ($model) {
-                            // Lógica simple para iconos: Si dice "Movil" o "Android/iPhone" ponemos icono de móvil
-                            $device = strtolower($model->dispositivo);
+                            // Validación de seguridad por si el campo viene vacío
+                            $device = strtolower($model->dispositivo ?? '');
                             if (strpos($device, 'movil') !== false || strpos($device, 'android') !== false || strpos($device, 'iphone') !== false) {
-                                return '<span style="font-size:1.5em; color: orange;">📱</span> <small>Móvil</small>';
+                                return '<span style="font-size:1.5em; color: orange;">📱</span>';
                             } else {
-                                return '<span style="font-size:1.5em; color: #17a2b8;">💻</span> <small>PC/Laptop</small>';
+                                return '<span style="font-size:1.5em; color: #17a2b8;">💻</span>';
                             }
                         },
-                        'contentOptions' => ['style' => 'text-align: center; width: 120px;'],
+                        'contentOptions' => ['style' => 'text-align: center; width: 80px;'],
                     ],
 
-                    // Columna 2: Fecha y Hora (Más legible)
+                    // Columna 2: Fecha (CORRECTO)
                     [
                         'attribute' => 'fecha_hora',
-                        'label' => '¿Cuándo?',
-                        'format' => ['date', 'php:d/m/Y H:i:s'], // Formato amigable español
+                        'label' => 'Fecha',
+                        'format' => ['date', 'php:d/m/Y H:i:s'],
                     ],
 
-                    // Columna 3: Dirección IP
+                    // Columna 3: IP (CORREGIDO: direccion_ip)
                     [
-                        'attribute' => 'ip',
-                        'label' => 'Desde la IP',
-                        'value' => function ($model) {
-                            return $model->ip; // Aquí podrías ocultar parte de la IP si quisieras privacidad: "192.168.1.***"
+                        'attribute' => 'direccion_ip', // <--- AQUÍ ESTABA EL ERROR
+                        'label' => 'IP',
+                    ],
+
+                    // Columna 4: Botón Ver Detalles (Lo que íbamos a añadir hoy)
+                    [
+                        'class' => 'yii\grid\ActionColumn',
+                        'template' => '{view}',
+                        'buttons' => [
+                            'view' => function ($url, $model, $key) {
+                                return \yii\helpers\Html::a('Ver Detalles', $url, [
+                                    'class' => 'btn btn-sm btn-outline-primary',
+                                ]);
+                            },
+                        ],
+                        // Importante: redirigir a una vista tuya
+                        'urlCreator' => function ($action, $model, $key, $index) {
+                            return \yii\helpers\Url::to(['log-visita/view', 'id' => $model->id]);
                         }
-                    ],
-
-                    // Columna 4: Detalles Técnicos (Navegador completo)
-                    [
-                        'attribute' => 'dispositivo',
-                        'label' => 'Detalle Técnico',
-                        'format' => 'ntext',
-                        'contentOptions' => ['class' => 'text-muted small'], // Texto más pequeño y gris
                     ],
                 ],
             ]); ?>
