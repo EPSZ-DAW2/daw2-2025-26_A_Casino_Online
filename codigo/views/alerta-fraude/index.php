@@ -26,6 +26,13 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+        'rowOptions' => function ($model) {
+            if ($model->nivel_riesgo == 'Alto') {
+                return ['class' => 'table-danger']; // Rojo Bootstrap
+            } elseif ($model->nivel_riesgo == 'Medio') {
+                return ['class' => 'table-warning']; // Amarillo Bootstrap
+            }
+        },
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 

@@ -19,6 +19,16 @@ use Yii;
  */
 class AlertaFraude extends \yii\db\ActiveRecord
 {
+    // Definimos los Niveles de Riesgo según el PDF
+    const RIESGO_BAJO = 'Bajo';
+    const RIESGO_MEDIO = 'Medio';
+    const RIESGO_ALTO = 'Alto';
+
+    // Definimos los Tipos de Fraude según el PDF
+    const TIPO_COLUSION = 'Colusión';
+    const TIPO_CHIP_DUMPING = 'Chip Dumping';
+    const TIPO_BOT = 'Bot';
+    const TIPO_PATRON_ANOMALO = 'Patrón de Apuesta Anómalo';
     /**
      * {@inheritdoc}
      */
