@@ -19,17 +19,27 @@ class LogVisitaController extends Controller
      */
     public function behaviors()
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
+        return [
+            'access' => [
+                'class' => \yii\filters\AccessControl::class,
+                'rules' => [
+                    // Regla 1: Acciones públicas para usuarios logueados
+                    [
+                        'actions' => ['mis-visitas', 'view'], // 'view' es tu panel bonito
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                    // Regla 2: Todo lo demás (index, delete) solo para admin
+                    [
+                        'actions' => ['index', 'delete'],
+                        'allow' => true,
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->identity->username === 'admin';
+                        }
                     ],
                 ],
-            ]
-        );
+            ],
+        ];
     }
 
     /**

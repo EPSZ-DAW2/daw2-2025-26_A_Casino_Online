@@ -46,6 +46,16 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         ['label' => '🎲 Ruleta', 'url' => '#'],
         ['label' => '🏆 Torneos', 'url' => '#'], // Futuro G4
     ];
+    // --- SECCIÓN SEGURIDAD (G5) ---
+    if (!Yii::$app->user->isGuest) {
+        // Enlace 1: Para todos los usuarios (Tu panel bonito)
+        $menuItems[] = ['label' => '🛡️ Mi Seguridad', 'url' => ['/log-visita/mis-visitas']];
+        
+        // Enlace 2: Solo si es admin (Gestión)
+        if (Yii::$app->user->identity->username === 'admin') {
+            $menuItems[] = ['label' => '🚨 Gestión Fraude', 'url' => ['/alerta-fraude/index']];
+        }
+    }
 
     // Si es ADMIN, le mostramos el acceso al Backend (G1)
 
