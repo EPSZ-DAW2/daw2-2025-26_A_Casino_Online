@@ -12,8 +12,7 @@ use app\models\AlertaFraude;
 <div class="alerta-fraude-form">
 
     <?php $form = ActiveForm::begin(); ?>
-
-    <?= $form->field($model, 'id_usuario')->textInput() ?>
+    <?= $form->field($model, 'id_usuario')->textInput(['type' => 'number', 'placeholder' => 'Escribe el ID (ej: 100)']) ?>
 
     <?= $form->field($model, 'tipo')->dropDownList([
         AlertaFraude::TIPO_BOT => '🤖 Posible Bot',

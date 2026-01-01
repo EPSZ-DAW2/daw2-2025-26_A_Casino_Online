@@ -44,10 +44,21 @@ $this->params['breadcrumbs'][] = $this->title;
             //'detalles_tecnicos:ntext',
             //'fecha_detectada',
             [
-                'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, AlertaFraude $model, $key, $index, $column) {
-                    return Url::toRoute([$action, 'id' => $model->id]);
-                 }
+                'class' => 'yii\grid\ActionColumn',
+                'template' => '{view} {update} {delete} {banear}', // Añadimos {banear} al template
+                'buttons' => [
+                    'banear' => function ($url, $model) {
+                        return \yii\helpers\Html::a('⛔ Banear', ['banear', 'id' => $model->id], [
+                            'class' => 'btn btn-danger btn-sm',
+                            'title' => 'Bloquear cuenta de usuario permanentemente',
+                            'style' => 'margin-left: 5px;',
+                            'data' => [
+                                'confirm' => '¿Estás 100% seguro de que quieres BANEAR a este usuario?',
+                                'method' => 'post',
+                            ],
+                        ]);
+                    },
+                ],
             ],
         ],
     ]); ?>

@@ -7,6 +7,7 @@ use app\models\AlertaFraudeSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii;
 
 /**
  * AlertaFraudeController implements the CRUD actions for AlertaFraude model.
@@ -18,17 +19,28 @@ class AlertaFraudeController extends Controller
      */
     public function behaviors()
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
+        return [
+            'access' => [
+                'class' => \yii\filters\AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'], // '@' significa usuario logueado
+                        'matchCallback' => function ($rule, $action) {
+                            // Solo dejamos pasar si el usuario es "admin"
+                            return Yii::$app->user->identity->username === 'admin';
+                        }
                     ],
                 ],
-            ]
-        );
+            ],
+            'verbs' => [
+                'class' => \yii\filters\VerbFilter::class,
+                'actions' => [
+                    'delete' => ['POST'],
+                    'banear' => ['POST'], // Protegemos el ban también
+                ],
+            ],
+        ];
     }
 
     /**
@@ -130,5 +142,38 @@ class AlertaFraudeController extends Controller
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
+    }
+
+    /**
+     * Acción para Banear a un usuario directamente desde una alerta.
+     */
+    public function actionBanear($id)
+    {
+        // 1. Buscamos la alerta seleccionada
+        $alerta = $this->findModel($id);
+
+        // 2. Buscamos al usuario asociado a esa alerta
+        $usuario = \app\models\Usuario::findOne($alerta->id_usuario);
+
+        if ($usuario) {
+            // 3. ¡ZAS! Cambiamos su estado a Bloqueado
+            $usuario->estado_cuenta = 'Bloqueado';
+
+            // 4. Guardamos los cambios
+            if ($usuario->save(false)) { // false para saltar validaciones estrictas
+                Yii::$app->session->setFlash('success', '🚫 El usuario ' . $usuario->nick . ' ha sido BANEADO correctamente.');
+
+                // Opcional: Marcar la alerta como "Resuelta" automáticamente
+                $alerta->estado = 'Resuelto';
+                $alerta->save(false);
+            } else {
+                Yii::$app->session->setFlash('error', 'No se pudo banear al usuario.');
+            }
+        } else {
+            Yii::$app->session->setFlash('error', 'Error: Esta alerta no tiene un usuario válido asociado.');
+        }
+
+        // 5. Volvemos a la lista
+        return $this->redirect(['index']);
     }
 }
