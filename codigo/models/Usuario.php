@@ -35,6 +35,10 @@ use yii\web\IdentityInterface;
  * @property Usuario $padrino
  * @property Usuario[] $ahijados
  */
+
+/**
+ * Modelo Usuario: Gestiona la identidad y seguridad (G5) y roles (G2).
+ */
 class Usuario extends ActiveRecord implements IdentityInterface
 {
     // Variable auxiliar para cuando estemos creando/editando la contraseña en un formulario
@@ -244,8 +248,9 @@ class Usuario extends ActiveRecord implements IdentityInterface
     }
 
     /**
-    * Relación con el modelo Monedero (G2)
-    * Permite acceder al saldo mediante $usuario->monedero
+    * RELACIÓN CON MONEDERO (W2):
+    * Permite acceder al saldo del usuario directamente desde la identidad.
+    * Ejemplo: Yii::$app->user->identity->monedero->saldo_real
     */
     public function getMonedero()
     {
@@ -253,15 +258,22 @@ class Usuario extends ActiveRecord implements IdentityInterface
         return $this->hasOne(Monedero::class, ['id_usuario' => 'id']);
     }
 
+    /**
+    * SEGURIDAD DE CONTRASEÑAS (MODIFICADO POR G2):
+    * Este método se ejecuta automáticamente antes de guardar en la base de datos.
+    * Resuelve el error "Hash is invalid" al asegurar que la clave siempre se cifre.
+    */
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            // Solo hasheamos si el password_hash ha cambiado y no parece ya un hash
+            // Si el campo password_hash contiene texto plano (no empieza por $2y$), lo ciframos
             // Un hash de Yii siempre empieza por $2y$
             if (!empty($this->password_hash) && strpos($this->password_hash, '$2y$') !== 0) {
+                // Aplicamos el algoritmo Blowfish a través de la seguridad de Yii2
                 $this->password_hash = Yii::$app->security->generatePasswordHash($this->password_hash);
             }
         
+            // Para nuevos registros, generamos la clave de autenticación para "Recordarme"
             if ($insert) {
                 $this->auth_key = Yii::$app->security->generateRandomString();
             }

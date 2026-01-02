@@ -62,9 +62,16 @@ $this->title = 'Mi Monedero Virtual';
 </div>
 
 <script>
+/**
+* VARIABLES DE ESTADO: Mantienen el rastro de qué queremos hacer.
+*/
 let operacionActual = '';
 let metodoActual = '';
 
+/**
+* FUNCIÓN gestionarFlujo (W2):
+* Modifica el DOM en tiempo real para adaptar el formulario al método de pago.
+*/
 function gestionarFlujo(tipo, metodo = '') {
     operacionActual = tipo;
     metodoActual = metodo;
@@ -73,7 +80,7 @@ function gestionarFlujo(tipo, metodo = '') {
     const labelDato = document.getElementById('label-dato');
     const inputDato = document.getElementById('input-dato-pago');
 
-    panel.style.display = 'block';
+    panel.style.display = 'block'; // Mostrar el formulario
     
     if (tipo === 'Ingreso') {
         grupoDato.style.display = 'block';
@@ -86,18 +93,25 @@ function gestionarFlujo(tipo, metodo = '') {
         }
         document.getElementById('titulo-operacion').innerText = 'Depositar vía ' + metodo;
     } else {
+        // Lógica de Retirada: Ocultamos el campo de tarjeta/tlf ya que se asume transferencia
         grupoDato.style.display = 'none'; // Para retirar no pedimos número aquí
         document.getElementById('titulo-operacion').innerText = 'Solicitar Retirada';
     }
 }
 
+/**
+* FUNCIÓN ejecutarOperacion (G2):
+* Recopila los datos y redirige al controlador de Yii2 con los parámetros necesarios.
+*/
 function ejecutarOperacion() {
     const cantidad = document.getElementById('input-cantidad').value;
     const datoExtra = document.getElementById('input-dato-pago').value;
 
+    // Validaciones básicas de cliente
     if (cantidad <= 0) return alert('Cantidad no válida');
     if (operacionActual === 'Ingreso' && !datoExtra) return alert('Por favor, introduce los datos de pago');
 
+    // Construcción de la URL de Yii2 incluyendo cantidad, método y el dato (Tarjeta/Tlf)
     let url = (operacionActual === 'Ingreso') 
         ? '<?= \yii\helpers\Url::to(['depositar']) ?>&cantidad=' + cantidad + '&metodo=' + metodoActual + '&dato=' + datoExtra
         : '<?= \yii\helpers\Url::to(['retirar']) ?>&cantidad=' + cantidad;
@@ -120,17 +134,19 @@ function ejecutarOperacion() {
                         'attribute' => 'tipo_operacion',
                         'format' => 'raw',
                         'value' => function($model) {
+                            // Iconografía dinámica para identificar el tipo de movimiento visualmente
                             $icon = $model->tipo_operacion == 'Deposito' ? 'arrow-up-circle-fill text-success' : 'arrow-down-circle-fill text-danger';
                             if($model->tipo_operacion == 'Premio') $icon = 'trophy-fill text-warning';
                             return "<i class='bi bi-$icon'></i> " . $model->tipo_operacion;
                         }
                     ],
-                    'cantidad:currency',
+                    'cantidad:currency', // Formateado automático a moneda
                     'metodo_pago',
                     [
                         'attribute' => 'estado',
                         'format' => 'raw',
                         'value' => function($model) {
+                            // Badge de colores: verde para completado, naranja para pendiente (G2)
                             $class = $model->estado == 'Completado' ? 'success' : 'warning';
                             return "<span class='badge bg-$class'>$model->estado</span>";
                         }
