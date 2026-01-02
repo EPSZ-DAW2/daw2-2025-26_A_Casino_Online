@@ -242,4 +242,31 @@ class Usuario extends ActiveRecord implements IdentityInterface
 
         return true;
     }
+
+    /**
+    * Relación con el modelo Monedero (G2)
+    * Permite acceder al saldo mediante $usuario->monedero
+    */
+    public function getMonedero()
+    {
+        // Un usuario tiene un único monedero (hasOne)
+        return $this->hasOne(Monedero::class, ['id_usuario' => 'id']);
+    }
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            // Solo hasheamos si el password_hash ha cambiado y no parece ya un hash
+            // Un hash de Yii siempre empieza por $2y$
+            if (!empty($this->password_hash) && strpos($this->password_hash, '$2y$') !== 0) {
+                $this->password_hash = Yii::$app->security->generatePasswordHash($this->password_hash);
+            }
+        
+            if ($insert) {
+                $this->auth_key = Yii::$app->security->generateRandomString();
+            }
+            return true;
+        }
+        return false;
+    }
 }

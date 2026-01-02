@@ -28,7 +28,8 @@ class AlertaFraudeController extends Controller
                         'roles' => ['@'], // '@' significa usuario logueado
                         'matchCallback' => function ($rule, $action) {
                             // Solo dejamos pasar si el usuario es "admin"
-                            return Yii::$app->user->identity->username === 'admin';
+                            // Usamos la función que creamos antes en el modelo Usuario
+                        return !Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin();
                         }
                     ],
                 ],

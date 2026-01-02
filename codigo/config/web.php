@@ -42,6 +42,10 @@ $config = [
                 ],
             ],
         ],
+        'formatter' => [
+        'currencyCode' => 'EUR',
+        'locale' => 'es-ES',
+        ],
         'db' => $db,
         /*
         'urlManager' => [
