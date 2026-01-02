@@ -10,8 +10,15 @@ use app\models\Monedero;
 use app\models\Transaccion;
 use yii\data\ActiveDataProvider;
 
+/**
+* MonederoController gestiona la lógica financiera del lado del usuario (G2-W2).
+*/
 class MonederoController extends Controller
 {
+    /**
+    * BEHAVIORS: Configura las reglas de acceso.
+    * Solo permitimos que usuarios autenticados ('@') accedan a estas funciones.
+    */
     public function behaviors()
     {
         return [
@@ -27,9 +34,15 @@ class MonederoController extends Controller
         ];
     }
 
+    /**
+    * VISTA PRINCIPAL (index):
+    * Muestra el saldo actual, el historial y los datos para la gráfica.
+    */
     public function actionIndex()
     {
         $usuarioId = Yii::$app->user->id;
+
+        // Buscamos el monedero del usuario
         $monedero = Monedero::findOne(['id_usuario' => $usuarioId]);
 
         // Consultamos el gasto total por categoría (Solo apuestas/gastos)
@@ -42,15 +55,19 @@ class MonederoController extends Controller
 
         return $this->render('index', [
             'monedero' => $monedero,
+            // PREPARACIÓN DEL HISTORIAL (GridView):
             'dataProvider' => new ActiveDataProvider([
                 'query' => Transaccion::find()->where(['id_usuario' => $usuarioId])->orderBy(['fecha_hora' => SORT_DESC]),
             ]),
+            // DATOS PARA LA GRÁFICA (W2):
+            // Agrupamos las transacciones por categoría para alimentar el Chart.js
             'datosGrafica' => $gastosPorCategoria, // Enviamos los datos procesados
         ]);
     }
 
     /**
-    * Simulación de ingreso de saldo (G2)
+    * ACCIÓN DEPOSITAR (G2):
+    * Procesa los ingresos mediante Tarjeta o Bizum.
     */
     public function actionDepositar($cantidad, $metodo, $dato)
     {
@@ -66,21 +83,21 @@ class MonederoController extends Controller
         }
 
         if ($cantidad > 0) {
-            // Iniciar una transacción de base de datos para asegurar integridad
+            // TRANSACCIÓN DE BD: Aseguramos que si falla el registro, no se sume el dinero.
             $dbTrans = Yii::$app->db->beginTransaction();
             try {
-                // 1. Actualizar el saldo en el monedero
+                // Actualizar el saldo en el monedero
                 $monedero->saldo_real += $cantidad;
                 $monedero->save();
 
-                // 2. Registrar el movimiento en la tabla transaccion
+                // Registrar el movimiento en la tabla transaccion
                 $nuevaTrans = new Transaccion();
                 $nuevaTrans->id_usuario = $usuarioId;
                 $nuevaTrans->tipo_operacion = 'Deposito';
                 $nuevaTrans->cantidad = $cantidad;
                 $nuevaTrans->metodo_pago = $metodo; // Ahora guarda 'Bizum' o 'Tarjeta' según el clic
-                $nuevaTrans->referencia_externa = $dato;
-                $nuevaTrans->estado = 'Completado';
+                $nuevaTrans->referencia_externa = $dato; // El dato que capturamos del input dinámico
+                $nuevaTrans->estado = 'Completado'; // Los ingresos se completan automáticamente
                 $nuevaTrans->fecha_hora = date('Y-m-d H:i:s');
                 $nuevaTrans->save();
 
@@ -96,22 +113,23 @@ class MonederoController extends Controller
     }
 
     /**
-    * Solicitar retirada de fondos (G2)
+    * ACCIÓN RETIRAR (G2):
+    * Gestiona las solicitudes de cobro del usuario.
     */
     public function actionRetirar($cantidad)
     {
         $usuarioId = Yii::$app->user->id;
         $monedero = Monedero::findOne(['id_usuario' => $usuarioId]);
 
-        // Validación crítica: No se puede retirar más de lo que se tiene en Saldo Real
+       // VALIDACIÓN DE SALDO: Solo se puede retirar del saldo REAL.
         if ($monedero && $cantidad > 0 && $cantidad <= $monedero->saldo_real) {
             $dbTrans = Yii::$app->db->beginTransaction();
             try {
-                // 1. Restamos el dinero del saldo real inmediatamente para que no lo use
+                // Restamos el dinero del saldo real inmediatamente para que no lo use
                 $monedero->saldo_real -= $cantidad;
                 $monedero->save();
 
-                // 2. Registramos la transacción como 'Pendiente'
+                // Creamos la transacción en estado PENDIENTE para que el admin la apruebe
                 $trans = new Transaccion();
                 $trans->id_usuario = $usuarioId;
                 $trans->tipo_operacion = 'Retirada';

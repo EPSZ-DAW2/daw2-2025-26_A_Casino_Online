@@ -53,7 +53,8 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         
         // --- SECCIÓN SEGURIDAD Y ADMINISTRACIÓN (G5 / G2) ---
     if (!Yii::$app->user->isGuest) {
-        // Si el usuario es el ID 1 o tiene Rol 1 o se llama admin
+        // --- MENÚS DE ADMINISTRACIÓN (G2) ---
+        // Solo se muestran si el método esAdmin() devuelve true.
         $esAdmin = (Yii::$app->user->identity->esAdmin());
         //$esAdmin = (Yii::$app->user->identity->rol == 'admin' || Yii::$app->user->identity->username === 'admin');
         if ($esAdmin) {

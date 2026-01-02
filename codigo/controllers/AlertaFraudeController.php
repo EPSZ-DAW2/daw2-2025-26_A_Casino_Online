@@ -29,7 +29,7 @@ class AlertaFraudeController extends Controller
                         'matchCallback' => function ($rule, $action) {
                             // Solo dejamos pasar si el usuario es "admin"
                             // Usamos la función que creamos antes en el modelo Usuario
-                        return !Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin();
+                            return !Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin();
                         }
                     ],
                 ],
