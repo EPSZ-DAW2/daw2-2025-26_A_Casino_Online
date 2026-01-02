@@ -51,10 +51,17 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         // Enlace 1: Para todos los usuarios (Tu panel bonito)
         $menuItems[] = ['label' => '🛡️ Mi Seguridad', 'url' => ['/log-visita/mis-visitas']];
         
-        // Enlace 2: Solo si es admin (Gestión)
-        if (Yii::$app->user->identity->username === 'admin') {
+        // --- SECCIÓN SEGURIDAD Y ADMINISTRACIÓN (G5 / G2) ---
+    if (!Yii::$app->user->isGuest) {
+        // Si el usuario es el ID 1 o tiene Rol 1 o se llama admin
+        $esAdmin = (Yii::$app->user->identity->esAdmin());
+        //$esAdmin = (Yii::$app->user->identity->rol == 'admin' || Yii::$app->user->identity->username === 'admin');
+        if ($esAdmin) {
             $menuItems[] = ['label' => '🚨 Gestión Fraude', 'url' => ['/alerta-fraude/index']];
+            // Enlace para validar transacciones (G2)
+            $menuItems[] = ['label' => '💰 Validar Pagos', 'url' => ['/transaccion/index'], 'linkOptions' => ['class' => 'text-info fw-bold']];
         }
+    }
     }
 
     // Si es ADMIN, le mostramos el acceso al Backend (G1)
@@ -84,9 +91,11 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
             ? '@web/uploads/' . $user->avatar_url 
             : '@web/default_avatar.png';
 
-        // Placeholder del Saldo (Esperando al G2)
-        echo '<li class="nav-item me-3 text-white">';
-        echo '<span class="badge bg-success p-2">💰 0.00 €</span>'; 
+        // --- CAMBIO 1: SALDO EN TIEMPO REAL (W2) ---
+        // Accedemos a la relación 'monedero' que creamos en el modelo Usuario
+        $saldo = $user->monedero ? number_format($user->monedero->saldo_real, 2) : '0.00';
+        echo '<li class="nav-item me-3">';
+        echo '<span class="badge bg-success p-2 shadow-sm">💰 ' . $saldo . ' €</span>';
         echo '</li>';
 
         // Dropdown del Usuario
@@ -99,7 +108,9 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         
         echo '<ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="userDropdown">';
         echo '<li>' . Html::a('👤 Mi Perfil', ['/site/perfil'], ['class' => 'dropdown-item']) . '</li>';
-        echo '<li>' . Html::a('💳 Monedero', '#', ['class' => 'dropdown-item text-muted']) . '</li>'; // Futuro G2
+        // --- CAMBIO 2: ENLACE ACTIVO AL MONEDERO (G2) ---
+        // Quitamos el '#' y la clase 'text-muted'
+        echo '<li>' . Html::a('💳 Mi Monedero', ['/monedero/index'], ['class' => 'dropdown-item']) . '</li>';        
         echo '<li><hr class="dropdown-divider"></li>';
         echo '<li>' . Html::beginForm(['/site/logout'])
             . Html::submitButton('Cerrar Sesión', ['class' => 'dropdown-item text-danger'])
@@ -113,7 +124,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     ?>
 </header>
 
-<main id="main" class="flex-shrink-0" role="main">
+<main id="main" class="flex-shrink-0" style="padding-top: 70px;" role="main">
     <div class="container">
         <?php if (!empty($this->params['breadcrumbs'])): ?>
             <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>

@@ -21,7 +21,7 @@ use yii\widgets\ActiveForm;
             <div class="alert alert-info">
                 Dejar en blanco si no se desea cambiar la contraseña.
             </div>
-            <?= $form->field($model, 'password_plain')->passwordInput()->label('Nueva Contraseña') ?>
+            <?= $form->field($model, 'password_hash')->passwordInput(['maxlength' => true])->label('Contraseña') ?>
             
             <?= $form->field($model, 'rol')->dropDownList([ 
                 'jugador' => 'Jugador', 
