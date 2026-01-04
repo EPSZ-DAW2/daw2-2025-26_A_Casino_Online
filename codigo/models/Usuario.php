@@ -252,7 +252,7 @@ class Usuario extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * Permiso G1: Gestionar usuarios, banear, ver IPs.
+     * Permiso: Gestionar usuarios, banear, ver IPs.
      */
     public function puedeGestionarUsuarios()
     {
