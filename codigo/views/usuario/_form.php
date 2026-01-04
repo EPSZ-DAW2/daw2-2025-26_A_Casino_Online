@@ -23,10 +23,10 @@ use yii\widgets\ActiveForm;
             </div>
             <?= $form->field($model, 'password_hash')->passwordInput(['maxlength' => true])->label('Contraseña') ?>
             
-            <?= $form->field($model, 'rol')->dropDownList([ 
-                'jugador' => 'Jugador', 
-                'admin' => 'Administrador' 
-            ]) ?>
+            <?= $form->field($model, 'rol')->dropDownList(
+                \app\models\Usuario::getListaRoles(), 
+                ['prompt' => 'Seleccione un Rol...']
+            ) ?>
         </div>
 
         <div class="col-md-6">

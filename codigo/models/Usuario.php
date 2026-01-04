@@ -51,6 +51,12 @@ class Usuario extends ActiveRecord implements IdentityInterface
     {
         return 'usuario';
     }
+    //Constantes para los roles
+    const ROL_SUPERADMIN = 'superadmin'; // El Dios del sistema
+    const ROL_ADMIN      = 'admin';      // Gestión de usuarios (G1)
+    const ROL_FINANCIERO = 'financiero'; // Gestión de dinero/retiros (G2)
+    const ROL_CROUPIER   = 'croupier';   // Gestión de juegos/torneos (G3/G4)
+    const ROL_JUGADOR    = 'jugador';    // Usuario normal
 
     /**
      * Reglas de validación de datos.
@@ -73,6 +79,14 @@ class Usuario extends ActiveRecord implements IdentityInterface
             
             // Regla especial para el padrino (autoreferencia)
             [['id_padrino'], 'exist', 'skipOnError' => true, 'targetClass' => Usuario::class, 'targetAttribute' => ['id_padrino' => 'id']],
+
+            ['rol', 'in', 'range' => [
+                self::ROL_SUPERADMIN, 
+                self::ROL_ADMIN, 
+                self::ROL_FINANCIERO, 
+                self::ROL_CROUPIER, 
+                self::ROL_JUGADOR
+            ]],
         ];
     }
 
@@ -194,6 +208,20 @@ class Usuario extends ActiveRecord implements IdentityInterface
     // Sistema para controlar los permisos
     // -----------------------------------------------
 
+    //devuelve la lista de roles
+    public static function getListaRoles()
+    {
+        return [
+            self::ROL_JUGADOR    => 'Jugador',
+            self::ROL_CROUPIER   => 'Croupier (Gestión Juegos)',
+            self::ROL_FINANCIERO => 'Financiero (Gestión Pagos)',
+            self::ROL_ADMIN      => 'Administrador (Gestión Usuarios)',
+            self::ROL_SUPERADMIN => 'SUPER ADMINISTRADOR',
+        ];
+    }
+
+
+
     /**
      * Verifica si el usuario es Administrador.
      * Uso: Yii::$app->user->identity->esAdmin()
@@ -201,6 +229,50 @@ class Usuario extends ActiveRecord implements IdentityInterface
     public function esAdmin()
     {
         return $this->rol === 'admin';
+    }
+    //Revisa si es super admin
+    public function esSuperAdmin()
+    {
+        return $this->rol === self::ROL_SUPERADMIN;
+    }
+
+    /**
+     * Permiso para acceder al Panel de Control (Backend).
+     * Acceso: SuperAdmin, Admin, Financiero y Croupier.
+     */
+    public function puedeAccederBackend()
+    {
+        if ($this->esSuperAdmin()) return true; // El SuperAdmin entra siempre
+        
+        return in_array($this->rol, [
+            self::ROL_ADMIN, 
+            self::ROL_FINANCIERO, 
+            self::ROL_CROUPIER
+        ]);
+    }
+
+    /**
+     * Permiso: Gestionar usuarios, banear, ver IPs.
+     */
+    public function puedeGestionarUsuarios()
+    {
+        return $this->esSuperAdmin() || $this->rol === self::ROL_ADMIN;
+    }
+
+    /**
+     * Permiso G2: Aprobar retiradas y ver transacciones globales.
+     */
+    public function puedeGestionarDinero()
+    {
+        return $this->esSuperAdmin() || $this->rol === self::ROL_FINANCIERO || $this->rol === self::ROL_ADMIN ;
+    }
+
+    /**
+     * Permiso G3/G4: Crear juegos, editar RTP, gestionar torneos.
+     */
+    public function puedeGestionarJuegos()
+    {
+        return $this->esSuperAdmin() || $this->rol === self::ROL_CROUPIER;
     }
 
     /**
@@ -210,15 +282,6 @@ class Usuario extends ActiveRecord implements IdentityInterface
     public function esJugador()
     {
         return $this->rol === 'jugador';
-    }
-
-    /**
-     * Verifica si el usuario tiene permiso para entrar al Backend (Gestión).
-     * cambir esta función aquí si se modifican los roles
-     */
-    public function puedeAccederBackend()
-    {
-        return $this->esAdmin(); 
     }
 
     /**
@@ -234,17 +297,18 @@ class Usuario extends ActiveRecord implements IdentityInterface
      */
     public function puedeJugar()
     {
-        // Si está bloqueado, fuera.
-        if ($this->estado_cuenta !== 'Activo') {
-            return false;
+        // 1. Si está bloqueado, nadie juega
+        if ($this->estado_cuenta !== 'Activo') return false;
+
+        // 2. Si no verificado, nadie juega
+        if ($this->estado_verificacion !== 'Verificado') return false;
+
+        // 3. Empleados no juegan, pero SuperAdmin y Jugador sí
+        if ($this->rol === self::ROL_JUGADOR || $this->esSuperAdmin()) {
+            return true;
         }
 
-        // Si no está verificado, tampoco juega.
-        if (!$this->esVerificado()) {
-            return false;
-        }
-
-        return true;
+        return false; 
     }
 
     /**

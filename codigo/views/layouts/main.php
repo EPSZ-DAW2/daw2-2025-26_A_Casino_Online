@@ -15,9 +15,11 @@ AppAsset::register($this);
 $this->registerCsrfMetaTags();
 $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
 $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1, shrink-to-fit=no']);
-$this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? '']);
-$this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
 $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/favicon.ico')]);
+
+
+/** @var \app\models\Usuario $identity */
+$identity = Yii::$app->user->identity;
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -32,7 +34,6 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 <header id="header">
     <?php
     NavBar::begin([
-        // Marca del Casino (Izquierda)
         'brandLabel' => '🎰 ROYAL CASINO', 
         'brandUrl' => Yii::$app->homeUrl,
         'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top shadow'],
@@ -41,34 +42,36 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     // --- MENÚ IZQUIERDO (Navegación Principal) ---
     $menuItems = [
         ['label' => '🏠 Inicio', 'url' => ['/site/index']],
-        // Estos enlaces apuntarán a los módulos de tus compañeros cuando estén listos
+        // Enlaces placeholder para G3 y G4
         ['label' => '🎰 Slots', 'url' => '#', 'linkOptions' => ['class' => 'text-warning']], 
         ['label' => '🎲 Ruleta', 'url' => '#'],
-        ['label' => '🏆 Torneos', 'url' => '#'], // Futuro G4
+        ['label' => '🏆 Torneos', 'url' => '#'], 
     ];
-    // --- SECCIÓN SEGURIDAD (G5) ---
+
+    // --- MENÚS DE GESTIÓN (VISIBILIDAD POR ROLES) ---
     if (!Yii::$app->user->isGuest) {
-        // Enlace 1: Para todos los usuarios (Tu panel bonito)
-        $menuItems[] = ['label' => '🛡️ Mi Seguridad', 'url' => ['/log-visita/mis-visitas']];
         
-        // --- SECCIÓN SEGURIDAD Y ADMINISTRACIÓN (G5 / G2) ---
-    if (!Yii::$app->user->isGuest) {
-        // --- MENÚS DE ADMINISTRACIÓN (G2) ---
-        // Solo se muestran si el método esAdmin() devuelve true.
-        $esAdmin = (Yii::$app->user->identity->esAdmin());
-        //$esAdmin = (Yii::$app->user->identity->rol == 'admin' || Yii::$app->user->identity->username === 'admin');
-        if ($esAdmin) {
-            $menuItems[] = ['label' => '🚨 Gestión Fraude', 'url' => ['/alerta-fraude/index']];
-            // Enlace para validar transacciones (G2)
-            $menuItems[] = ['label' => '💰 Validar Pagos', 'url' => ['/transaccion/index'], 'linkOptions' => ['class' => 'text-info fw-bold']];
+        // 1. SEGURIDAD (Para todos los usuarios logueados)
+        $menuItems[] = ['label' => '🛡️ Mi Seguridad', 'url' => ['/log-visita/mis-visitas']];
+
+        // 2. GESTIÓN DE USUARIOS Y FRAUDE (G1 / G5)
+        // Permiso: SuperAdmin o Admin
+        if ($identity->puedeGestionarUsuarios()) {
+            $menuItems[] = ['label' => '⚙️ USUARIOS', 'url' => ['/usuario/index'], 'linkOptions' => ['class' => 'text-danger fw-bold']];
+            $menuItems[] = ['label' => '🚨 FRAUDE', 'url' => ['/alerta-fraude/index']];
         }
-    }
-    }
 
-    // Si es ADMIN, le mostramos el acceso al Backend (G1)
+        // 3. GESTIÓN FINANCIERA (G2)
+        // Permiso: SuperAdmin o Financiero
+        if ($identity->puedeGestionarDinero()) {
+            $menuItems[] = ['label' => '💰 PAGOS', 'url' => ['/transaccion/index'], 'linkOptions' => ['class' => 'text-info fw-bold']];
+        }
 
-    if (!Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin()) {
-        $menuItems[] = ['label' => '⚙️ GESTIÓN (Admin)', 'url' => ['/usuario/index'], 'linkOptions' => ['class' => 'text-danger fw-bold']];
+        // 4. GESTIÓN DE JUEGOS (G3)
+        // Permiso: SuperAdmin o Croupier
+        if ($identity->puedeGestionarJuegos()) {
+            $menuItems[] = ['label' => '🎮 JUEGOS', 'url' => ['/juego/index']];
+        }
     }
 
     echo Nav::widget([
@@ -85,16 +88,16 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         echo '<li class="nav-item">' . Html::a('Entrar', ['/site/login'], ['class' => 'btn btn-primary btn-sm']) . '</li>';
     } else {
         // VISTA USUARIO LOGUEADO
-        $user = Yii::$app->user->identity;
         
-        // Avatar pequeño para el menú
-        $avatarPath = ($user->avatar_url && strpos($user->avatar_url, 'http') === false) 
-            ? '@web/uploads/' . $user->avatar_url 
+        // Avatar seguro (si falla la imagen, pone una por defecto)
+        $avatarPath = ($identity->avatar_url && strpos($identity->avatar_url, 'http') === false) 
+            ? '@web/uploads/' . $identity->avatar_url 
             : '@web/default_avatar.png';
 
-        // --- CAMBIO 1: SALDO EN TIEMPO REAL (W2) ---
-        // Accedemos a la relación 'monedero' que creamos en el modelo Usuario
-        $saldo = $user->monedero ? number_format($user->monedero->saldo_real, 2) : '0.00';
+        // SALDO EN TIEMPO REAL (G2)
+        // Usamos el operador nullsafe (?) por si monedero aún no existe
+        $saldo = $identity->monedero ? number_format($identity->monedero->saldo_real, 2) : '0.00';
+        
         echo '<li class="nav-item me-3">';
         echo '<span class="badge bg-success p-2 shadow-sm">💰 ' . $saldo . ' €</span>';
         echo '</li>';
@@ -103,14 +106,12 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         echo '<li class="nav-item dropdown">';
         echo '<a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">';
         echo Html::img($avatarPath, ['class' => 'rounded-circle me-2', 'width' => '32', 'height' => '32', 'style' => 'object-fit:cover; border: 2px solid gold;']);
-        echo Html::encode($user->nick);
-        echo ' <span class="badge bg-secondary ms-2" style="font-size:0.7em">' . $user->nivel_vip . '</span>';
+        echo Html::encode($identity->nick);
+        echo ' <span class="badge bg-secondary ms-2" style="font-size:0.7em">' . strtoupper($identity->rol) . '</span>';
         echo '</a>';
         
         echo '<ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="userDropdown">';
         echo '<li>' . Html::a('👤 Mi Perfil', ['/site/perfil'], ['class' => 'dropdown-item']) . '</li>';
-        // --- CAMBIO 2: ENLACE ACTIVO AL MONEDERO (G2) ---
-        // Quitamos el '#' y la clase 'text-muted'
         echo '<li>' . Html::a('💳 Mi Monedero', ['/monedero/index'], ['class' => 'dropdown-item']) . '</li>';        
         echo '<li><hr class="dropdown-divider"></li>';
         echo '<li>' . Html::beginForm(['/site/logout'])
@@ -138,7 +139,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 <footer id="footer" class="mt-auto py-3 bg-light">
     <div class="container">
         <div class="row text-muted">
-            <div class="col-md-6 text-center text-md-start">&copy; My Company <?= date('Y') ?></div>
+            <div class="col-md-6 text-center text-md-start">&copy; Royal Casino <?= date('Y') ?></div>
             <div class="col-md-6 text-center text-md-end"><?= Yii::powered() ?></div>
         </div>
     </div>

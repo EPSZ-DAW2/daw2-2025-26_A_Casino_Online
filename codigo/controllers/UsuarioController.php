@@ -24,15 +24,14 @@ class UsuarioController extends Controller
                 'class' => \yii\filters\AccessControl::class,
                 'rules' => [
                     [
-                        // Regla: Permitir acceso SOLO a administradores
+                        // Regla: Permitir acceso a quien pueda gestionar usuarios (Admin + SuperAdmin)
                         'allow' => true,
-                        'roles' => ['@'], // El usuario debe estar autenticado
+                        'roles' => ['@'], // Usuario autenticado
                         'matchCallback' => function ($rule, $action) {
-                            // Aquí verificamos el campo 'rol' de la base de datos
-                            return Yii::$app->user->identity->rol === 'admin';
+                            // Esto permite que entre el Admin Y TAMBIÉN el SuperAdmin.
+                            return Yii::$app->user->identity->puedeGestionarUsuarios();
                         },
                         'denyCallback' => function ($rule, $action) {
-                            // Si no es admin, lanzamos error 403 o redirigimos
                             throw new \yii\web\ForbiddenHttpException('No tienes permiso para acceder a esta zona de administración.');
                         }
                     ],
