@@ -19,7 +19,7 @@ CREATE TABLE usuario (
     access_token VARCHAR(255) NULL,
     
     -- Datos Personales y Rol
-    rol ENUM('jugador', 'admin') DEFAULT 'jugador' COMMENT 'Diferenciación de permisos',
+    rol VARCHAR(30) NOT NULL DEFAULT 'jugador' COMMENT 'Diferenciación de permisos',
     nombre VARCHAR(50),
     apellido VARCHAR(50),
     telefono VARCHAR(20),

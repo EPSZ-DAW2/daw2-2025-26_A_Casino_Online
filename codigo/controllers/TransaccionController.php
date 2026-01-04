@@ -29,7 +29,7 @@ class TransaccionController extends Controller
                         'roles' => ['@'], // Usuario logueado
                         'matchCallback' => function ($rule, $action) {
                             // Además pasa la validación del método esAdmin() del modelo Usuario
-                            return Yii::$app->user->identity->esAdmin();
+                            return Yii::$app->user->identity->puedeGestionarDinero();
                         }
                     ],
                 ],
