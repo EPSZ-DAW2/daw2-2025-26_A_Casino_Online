@@ -51,34 +51,46 @@ class TorneoController extends Controller
         ]);
     }
 
+
+
     /**
-     * Displays a single Torneo model.
-     * @param int $id ID
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * Muestra el detalle de un torneo y su RANKING.
      */
     public function actionView($id)
     {
+        // 1. Buscamos el torneo (lo que ya hacía Gii)
+        $model = $this->findModel($id);
+
+        // 2. Buscamos los participantes ordenados por puntuación (De mayor a menor)
+        // Usamos 'joinWith' para traer también los datos del Usuario (Nick y Avatar)
+        $participantes = \app\models\ParticipacionTorneo::find()
+            ->where(['id_torneo' => $id])
+            ->joinWith('usuario') // Esto conecta con la tabla G1
+            ->orderBy(['puntuacion_actual' => SORT_DESC])
+            ->all();
+
+        // 3. Enviamos ambas cosas a la vista
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
+            'participantes' => $participantes, // ¡Nueva variable!
         ]);
     }
 
-    /**
-     * Creates a new Torneo model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return string|\yii\web\Response
-     */
     public function actionCreate()
     {
         $model = new Torneo();
 
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
+        if ($model->load(Yii::$app->request->post())) {
+            
+            // --- PARCHE DE FECHAS ---
+            // Reemplazamos la 'T' por un espacio para que MySQL sea feliz
+            $model->fecha_inicio = str_replace('T', ' ', $model->fecha_inicio);
+            $model->fecha_fin = str_replace('T', ' ', $model->fecha_fin);
+            // ------------------------
+
+            if ($model->save()) {
                 return $this->redirect(['view', 'id' => $model->id]);
             }
-        } else {
-            $model->loadDefaultValues();
         }
 
         return $this->render('create', [
@@ -97,8 +109,16 @@ class TorneoController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post())) {
+            
+             // --- PARCHE DE FECHAS ---
+            $model->fecha_inicio = str_replace('T', ' ', $model->fecha_inicio);
+            $model->fecha_fin = str_replace('T', ' ', $model->fecha_fin);
+            // ------------------------
+
+            if ($model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
         return $this->render('update', [
@@ -116,6 +136,72 @@ class TorneoController extends Controller
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
+
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Cancela el torneo y DEVUELVE el dinero a todos los inscritos.
+     */
+    public function actionCancelar($id)
+    {
+        $torneo = $this->findModel($id);
+
+        // 1. Validaciones de seguridad
+        if ($torneo->estado === 'Cancelado') {
+            Yii::$app->session->setFlash('warning', 'Este torneo ya estaba cancelado.');
+            return $this->redirect(['index']);
+        }
+        
+        if ($torneo->estado === 'Finalizado') {
+            Yii::$app->session->setFlash('error', 'No puedes cancelar un torneo que ya terminó.');
+            return $this->redirect(['index']);
+        }
+
+        // 2. Iniciamos Transacción (Todo o Nada)
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            // A. Cambiar estado del torneo
+            $torneo->estado = 'Cancelado';
+            if (!$torneo->save()) {
+                throw new \Exception('No se pudo actualizar el estado del torneo.');
+            }
+
+            // B. Buscar a todos los inscritos
+            $participaciones = $torneo->participaciones; // Gracias a la relación que pusimos en el Modelo
+            $devueltos = 0;
+
+            foreach ($participaciones as $participacion) {
+                // Recuperar el monedero del usuario
+                $monedero = \app\models\Monedero::findOne(['id_usuario' => $participacion->id_usuario]);
+                
+                if ($monedero) {
+                    // DEVOLUCIÓN: Sumamos el coste de entrada al saldo real
+                    // (Simplificación: devolvemos todo a saldo real para no complicar con bonos)
+                    $monedero->saldo_real += $torneo->coste_entrada;
+                    $monedero->save();
+
+                    // LOG DE TRANSACCIÓN (Para que quede constancia en G1)
+                    $log = new \app\models\Transaccion();
+                    $log->id_usuario = $participacion->id_usuario;
+                    $log->tipo_operacion = 'Premio'; // O crear un tipo 'Devolucion'
+                    $log->categoria = 'Banco';
+                    $log->cantidad = $torneo->coste_entrada; // Positivo
+                    $log->metodo_pago = 'Sistema';
+                    $log->estado = 'Completado';
+                    $log->save();
+                    
+                    $devueltos++;
+                }
+            }
+
+            $transaction->commit();
+            Yii::$app->session->setFlash('success', "Torneo cancelado. Se ha devuelto el dinero a $devueltos jugadores.");
+
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->session->setFlash('error', 'Error al cancelar: ' . $e->getMessage());
+        }
 
         return $this->redirect(['index']);
     }
