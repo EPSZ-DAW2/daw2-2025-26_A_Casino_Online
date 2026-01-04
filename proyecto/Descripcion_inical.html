@@ -1,0 +1,286 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Grupo 1 - Requisitos Iniciales - Casino</title>
+</head>
+<body class="papel" style="background-color:#F0F0C0;">
+<div class="bloque" style="font-family:arial;font-size:1.25em;text-align:justify;border:1.5mm solid #508050;margin:0.25em;padding:1em;">
+
+<div class="titulo titulo0" style="margin:5mm;font-size:2.0em;font-weight:bold;color:#4040F0">Casino</div>
+<div class="titulo titulo1" style="margin:5mm;font-size:2.0em;font-weight:bold">DESARROLLO DE APLICACIONES WEB 2</div>
+<div class="titulo titulo2" style="margin:5mm;font-size:1.5em;font-weight:bold">Requisitos Iniciales - Grupo 1</div>
+
+<br/>
+<div style="margin-left: 2em;">
+    <strong>Campus Viriato, Zamora, España</strong><br/>
+    <strong>DICIEMBRE/ENERO DE 2025/2026</strong><br/><br/>
+    <strong>Integrantes:</strong>
+    <ul style="margin-top:0;">
+        <li>Víctor Casaseca del Río DNI: 71057903R</li>
+        <li>Jorge Domínguez Sánchez DNI: 71041592C</li>
+        <li>Oswaldo González Suárez NIE: Y9966409V</li>
+        <li>Alejandro López Calabozo DNI: 71042604C</li>
+        <li>Hugo Jesus Ocaris Gonzalez DNI: 75932371X</li>
+        <li>Iván Pedrero González DNI: 42419669X</li>
+    </ul>
+</div>
+<br/>
+
+<hr/>
+<div class="titulo titulo3" style="margin:5mm;font-size:1.0em;font-weight:bold">Índice</div>
+<div style="text-align:justify;margin:0em">
+<ul>
+    <li>Requisitos Iniciales</li>
+    <li>Requerimientos para el Público en general (Frontend - Aspecto Visual)</li>
+    <li>Requerimientos para las partes privadas (Mantenimientos de Backend)</li>
+    <li>Funcionalidades Avanzadas de Juego (Mecánicas Específicas)</li>
+    <li>Funcionalidades Sociales y de Comunidad</li>
+    <li>Requisitos de Información / Datos
+        <ul>
+            <li>1. Módulo de Usuarios y Perfil (Clientes)</li>
+            <li>2. Módulo Financiero (Monedero y Banco)</li>
+            <li>3. Módulo de Juegos (Catálogo y Lógica)</li>
+            <li>4. Módulo de Torneos (Competición)</li>
+            <li>5. Módulo de Seguridad y Fraude</li>
+            <li>6. Módulo Social y Gamificación</li>
+        </ul>
+    </li>
+</ul>
+</div>
+
+<hr/>
+<div class="titulo titulo3" style="margin:5mm;font-size:1.0em;font-weight:bold">Requisitos Iniciales</div>
+
+<br/>
+&nbsp;&nbsp;&nbsp;Se desea diseñar una plataforma tecnológica integral para la <strong>Gestión de un Casino de Juego Online y su Sistema Financiero</strong>.
+<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;La aplicación será un portal web inmersivo donde los usuarios podrán acceder a un catálogo de juegos de azar digitales.
+<br/>
+&nbsp;&nbsp;&nbsp;El objetivo es ofrecer una experiencia visualmente impactante, dinámica y fácil de navegar, centrada en la diversión y la gamificación del usuario, eliminando cualquier barrera física.
+<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;Se podrán realizar búsquedas visuales por el catálogo de juegos mediante un sistema de filtros por tipo de juego (Slots, Ruleta, Cartas), por proveedor de software, por temática (Egipto, Futuro, Frutas), y el resultado se mostrará como una rejilla ("Grid") de tarjetas gráficas con las carátulas de los juegos, siempre que el juego esté activo en el sistema y no en mantenimiento.
+<br/>
+&nbsp;&nbsp;&nbsp;La aplicación además permitirá a los usuarios registrados mantener su perfil, participar en torneos competitivos, gestionar su Monedero Virtual al detalle (ingresos, gastos e históricos), y revisar su seguridad mediante el registro de visitas.
+<br/>
+
+<hr/>
+<div class="titulo titulo3" style="margin:5mm;font-size:1.0em;font-weight:bold">Requerimientos para el Público en general (Frontend - Aspecto Visual)</div>
+<div style="text-align:justify;margin:0em">
+<ul>
+  
+  <li><strong>Clientes (Mi Perfil y Dashboard):</strong> El usuario dispondrá de una zona privada visualmente atractiva ("Mi Cuenta") donde gestionará su identidad.
+    <ul>
+        <li><strong>Cabecera de Perfil:</strong> Se mostrará el Avatar del usuario (personalizable), su Nick, y una barra de progreso visual que indica su Nivel VIP actual (Bronce, Plata, Oro).</li>
+        <li><strong>Gamificación:</strong> Un área de "Logros" donde se ven medallas o trofeos desbloqueados por hitos (ej: "Ganar 3 manos seguidas").</li>
+        <li><strong>Datos Personales:</strong> Formularios claros para actualizar contacto o contraseña, con validaciones visuales en tiempo real.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Monedero (Wallet) - El Banco Personal:</strong> Sección crítica dividida en tres pestañas o zonas visuales claras para la gestión financiera:
+    <ul type="none" style="padding-left:1.25em">
+      <li><strong>1. Ingresos (Depositar):</strong> Una interfaz limpia con tarjetas seleccionables para los métodos de pago (Tarjeta, Bizum, Crypto, Transferencia). Al seleccionar uno, se despliega el formulario correspondiente. Debe ser rápido ("One-Click") y mostrar visualmente el saldo añadido al instante.</li>
+      
+      <li><strong>2. Gastos (Retirar y Apostar):</strong>
+        <ul>
+            <li><strong>Retiradas:</strong> Formulario para solicitar el cobro de premios a su cuenta bancaria. Debe mostrar claramente cuánto saldo es "Retirable" (Efectivo) y cuánto está bloqueado por Bonos.</li>
+            <li><strong>Control de Gasto:</strong> Gráficas circulares que muestran al usuario en qué categorías está gastando más dinero este mes (ej: 60% Slots, 40% Ruleta).</li>
+        </ul>
+      </li>
+
+      <li><strong>3. Histórico de Transacciones:</strong> Un listado cronológico y visual (scroll infinito). Cada línea tendrá un icono distintivo (flecha verde para ingreso, flecha roja para retirada/apuesta, trofeo dorado para premio). Al hacer clic en una línea, se despliega el detalle técnico de la operación.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Torneos (Competición):</strong> Una página dedicada a la competición entre jugadores.
+    <ul>
+        <li><strong>Escaparate de Torneos:</strong> Lista de tarjetas con los torneos disponibles. Cada tarjeta muestra: Imagen del juego, Cuenta atrás para el inicio, Precio de entrada y la Bolsa de Premios garantizada.</li>
+        <li><strong>Dentro del Torneo:</strong> Si el usuario entra en un torneo activo, verá el "Ranking", una tabla que se actualiza en tiempo real mostrando los nicks de los líderes y sus puntos, fomentando la competitividad.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Juegos (La Sala de Juego):</strong>
+    <ul>
+        <li><strong>Lobby Principal:</strong> Diseño de cuadrícula (Grid) responsive. Se mostrarán las carátulas de los juegos divididas en bloques como "Los Más Jugados", "Nuevos Lanzamientos" y "Botes Acumulados" (con contadores numéricos tipo "Jackpot").</li>
+        <li><strong>Buscador Visual:</strong> Al escribir en la barra, los juegos no coincidentes se desvanecen y quedan resaltados los que cumplen el criterio.</li>
+        <li><strong>Vista de Juego:</strong> Al jugar, el juego ocupa el centro. Debajo, una barra persistente muestra el saldo y acceso rápido al cajero sin salir de la partida.</li>
+    </ul>
+  </li>
+  <br/>
+
+  <li><strong>Visitas (Seguridad y Sesiones):</strong> Apartado de seguridad dentro del perfil del usuario.
+    <ul>
+        <li><strong>Historial de Accesos:</strong> El administrador podrá ver una lista de sus últimas conexiones ("Visitas") indicando la Fecha y Hora. Esto sirve para que tenga un control sobre los usuarios detecte accesos no autorizados.</li>
+        <li><strong>Historial de Ingresos:</strong> El cliente podrá ver los ingresos y las extracciones de cada cliente ("Ingresos") indicando: Fecha/Hora y Cantidad. Esto sirve para que el usuario tenga el control de la gestión del dinero.</li>
+    </ul>
+  </li>
+  <br/>
+
+</ul>
+</div>
+
+<hr/>
+<div class="titulo titulo3" style="margin:5mm;font-size:1.0em;font-weight:bold">Requerimientos para las partes privadas (Mantenimientos de Backend)</div>
+<div style="text-align:justify;margin:0em">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** En general se tendrán funciones básicas de Alta, Modificación, Baja, Consulta, Búsquedas/Filtrado.
+<ul>
+  <li><strong>Mantenimiento de Clientes (Usuarios):</strong> Gestión completa de la base de datos de jugadores.
+    <ul>
+        <li><strong>CRUD:</strong> El administrador podrá ver en una sola pantalla: Datos personales, Estado de verificación de documentos (DNI/Selfie), Nivel VIP actual y notas internas sobre el comportamiento del usuario.</li>
+        <li><strong>Acciones:</strong> Bloquear usuario (banear), restablecer contraseña, asignar bonos manuales.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Mantenimiento de Monedero (Gestión Financiera):</strong> Control centralizado de los flujos de dinero.
+    <ul>
+        <li><strong>Gestión de Ingresos:</strong> Listado de todos los depósitos realizados. Posibilidad de verificar el estado de las pasarelas de pago.</li>
+        <li><strong>Gestión de Gastos (Retiradas):</strong> Cola de solicitudes de retirada pendientes de aprobación. El sistema marcará en rojo las retiradas. El administrador puede revisar todos los movimientos.</li>
+        <li><strong>Visor del Histórico:</strong> Buscador avanzado para auditar transacciones pasadas por fecha, usuario, tipo o importe.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Mantenimiento de Torneos:</strong> Herramienta para crear y gestionar la agenda competitiva.
+    <ul>
+        <li><strong>Creación:</strong> Configurar título, juego asociado, fecha de inicio/fin, coste de inscripción (Buy-in) y estructura de premios (ej: "El ganador se lleva el 50%").</li>
+        <li><strong>Gestión:</strong> Ver lista de inscritos en un torneo, cancelar torneos por falta de quórum (devolviendo el dinero automáticamente), o pausar torneos en curso.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Mantenimiento de Juegos (Catálogo):</strong> Gestor de contenidos (CMS) para los juegos.
+    <ul>
+        <li><strong>Ficha de Juego:</strong> Subir imagen de carátula, definir nombre, proveedor, RTP (porcentaje de retorno teórico), y categoría.</li>
+        <li><strong>Estado:</strong> Interruptor para Activar/Desactivar juegos. Un juego desactivado desaparece instantáneamente de la web pública.</li>
+        <li><strong>Destacados:</strong> Marcar juegos como "Nuevo" para que aparezcan arriba en la web.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Mantenimiento de Visitas (Logs de Acceso):</strong> Herramienta de seguridad y auditoría técnica.
+    <ul>
+        <li><strong>Monitorización:</strong> Listado de todas las sesiones de inicio ("Visitas") en la plataforma.</li>
+    </ul>
+  </li>
+  <br/>
+  
+</ul>
+</div>
+
+<hr/>
+<div class="titulo titulo3" style="margin:5mm;font-size:1.0em;font-weight:bold">Funcionalidades Avanzadas de Juego (Mecánicas Específicas)</div>
+<div style="text-align:justify;margin:0em">
+<ul>
+  <li><strong>Módulo de Blackjack ("La Estrategia"):</strong>
+    <ul>
+        <li><strong>Side Bets (Apuestas Laterales):</strong> Implementar lógica para apuestas complejas adicionales a la mano principal, como "Perfect Pairs" (si tus dos primeras cartas son par) o "21+3" (combinación con la carta del crupier). Esto complica el cálculo de premios.</li>
+        <li><strong>Tablas de Estrategia Básica:</strong> Una ayuda visual opcional ("Cheat Sheet") que muestra al jugador qué decisión es matemáticamente óptima (Pedir, Plantarse, Doblar o Separar) según sus cartas y la del crupier.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Módulo de Ruleta ("Estadísticas y Patrones"):</strong>
+    <ul>
+        <li><strong>Hot & Cold Numbers:</strong> Un panel estadístico que muestra los últimos números salidos, destacando los "Calientes" (salen mucho) y los "Fríos" (hace mucho que no salen), y porcentajes de Rojo/Negro. Aunque el juego es azar (RNG), esto es vital para la psicología del jugador.</li>
+        <li><strong>Racetrack (Circuito de Apuestas):</strong> Interfaz gráfica ovalada adicional al tapete clásico para realizar apuestas francesas complejas ("Vecinos del Cero", "Huérfanos", "Tercio") con un solo clic.</li>
+    </ul>
+  </li>
+  <br/>
+
+  <li><strong>Tragaperras:</strong> Un indicador estadístico dinámico que muestra el porcentaje de devolución real de la máquina en las últimas tiradas (ej: "Pagando al 104%"), clasificando la slot como "Caliente" (en racha de pagos) o "Fría" (en fase de recaudación). Aunque el resultado es aleatorio, este dato es clave para la psicología del jugador, invitándole a aprovechar la racha o esperar el cambio de ciclo.
+  </li>
+  <br/>
+</ul>
+</div>
+
+<hr/>
+<div class="titulo titulo3" style="margin:5mm;font-size:1.0em;font-weight:bold">Funcionalidades Sociales y de Comunidad</div>
+<div style="text-align:justify;margin:0em">
+<ul>
+  <li><strong>Sistema de Afiliados (Marketing Multinivel):</strong> Una funcionalidad clave para el negocio.
+    <ul>
+        <li><strong>Panel de Afiliado:</strong> Los usuarios pueden registrarse como "Promotores". Se les genera un enlace único.</li>
+        <li><strong>Tracking de comisiones:</strong> Si un usuario B se registra con el enlace del usuario A, el sistema debe rastrear todas las pérdidas del usuario B de por vida y abonar automáticamente un porcentaje (ej: 20% del Revenue Share) en el monedero del usuario A.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>Chat y Amigos:</strong>
+    <ul>
+        <li><strong>Mesas Privadas:</strong> Posibilidad de que un usuario cree una mesa de Póker con contraseña e invite a sus amigos para jugar una partida cerrada con dinero real.</li>
+        <li><strong>Chat Moderado:</strong> Sistema de chat en las mesas con filtro automático de palabras ofensivas (bad words) y envío de Emojis animados.</li>
+    </ul>
+  </li>
+  <br/>
+</ul>
+</div>
+
+<hr/>
+<div class="titulo titulo3" style="margin:5mm;font-size:1.0em;font-weight:bold">Requisitos de Información / Datos</div>
+<div style="text-align:justify;margin:0em">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** Información y Datos que debe almacenar y manejar el sistema.
+
+<ul>
+  <li><strong>1. Módulo de Usuarios y Perfil (Clientes)</strong>
+    <ul>
+        <li><strong>Usuario:</strong> ID_Usuario (Primary Key), Nick (Único), Email, Contraseña_Hash, Avatar_URL (Imagen), Nombre, Apellido, Teléfono, Fecha_Registro.</li>
+        <li><strong>Estado_Usuario:</strong> ID_Usuario, Nivel_VIP (Bronce/Plata/Oro), Puntos_Progreso (Barra visual), Estado_Cuenta (Activo/Bloqueado), Estado (Verificado/Pendiente/Rechazado), Notas_Internas_Admin.</li>
+        <li><strong>Afiliación:</strong> ID_Usuario, Código_Referido_Propio, ID_Padrino (Usuario que lo invitó).</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>2. Módulo Financiero (Monedero y Banco)</strong>
+    <ul>
+        <li><strong>Monedero (Wallet):</strong> ID_Monedero, ID_Usuario, Saldo_Real (Dinero retirable), Saldo_Bono (Dinero bloqueado/promocional), Divisa.</li>
+        <li><strong>Transacción:</strong> ID_Transacción, ID_Usuario, Tipo_Operación (Depósito/Retirada/Apuesta/Premio/Comisión_Afiliado), Categoría (Slots/Ruleta/Cartas/Banco - Para gráficas de gasto), Cantidad, Método_Pago (Visa/Bizum/Crypto), Estado (Completado/Pendiente), Fecha_Hora.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>3. Módulo de Juegos (Catálogo y Lógica)</strong>
+    <ul>
+        <li><strong>Ficha_Juego:</strong> ID_Juego, Nombre, Proveedor (NetEnt, Playtech...), Tipo (Slot/Ruleta/Cartas), Temática (Egipto/Futuro), Porcentaje_RTP (Retorno Teórico), URL_Carátula (Para el Grid).</li>
+        <li><strong>Estado_Juego:</strong> ID_Juego, Interruptor_Activo (Sí/No), Es_Nuevo (Destacado), En_Mantenimiento, Tasa_Pago_Actual (Estadística Hot/Cold), Estado_Racha (Caliente/Fría).</li>
+        <li><strong>Historial_Partida (Logs):</strong> ID_Ronda, ID_Usuario, ID_Juego, Cantidad_Apostada, Cantidad_Ganada, Detalle_Técnico (JSON con cartas exactas o número salido), Fecha_Hora.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>4. Módulo de Torneos (Competición)</strong>
+    <ul>
+        <li><strong>Torneo:</strong> ID_Torneo, Título, ID_Juego_Asociado, Fecha_Inicio, Fecha_Fin, Coste_Entrada (Buy-in), Bolsa_Premios_Garantizada, Estado (Abierto/En Curso/Finalizado).</li>
+        <li><strong>Participación_Torneo:</strong> ID_Participación, ID_Torneo, ID_Usuario, Puntuación_Actual (Para el Ranking en vivo), Posición_Final, Premio_Ganado.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>5. Módulo de Seguridad y Fraude</strong>
+    <ul>
+        <li><strong>Visita (Log de Acceso):</strong> ID_Log, ID_Usuario, Dirección_IP, Dispositivo (Móvil/PC), Fecha_Hora.</li>
+        <li><strong>Alerta_Fraude:</strong> ID_Alerta, Tipo (Colusión/Chip Dumping/Bot/Patrón de Apuesta Anómalo), Nivel_Riesgo (Alto/Medio/Bajo), Estado (Pendiente Revisión/Investigando/Resuelto), Detalles_Técnicos.</li>
+    </ul>
+  </li>
+  <br/>
+  
+  <li><strong>6. Módulo Social y Gamificación</strong>
+    <ul>
+        <li><strong>Logro:</strong> ID_Logro, Nombre (Ej: "Ganar 3 seguidas"), Descripción, Icono_Trofeo.</li>
+        <li><strong>Logro_Usuario:</strong> ID_Usuario, ID_Logro, Fecha_Desbloqueo.</li>
+        <li><strong>Mesa_Privada:</strong> ID_Mesa, ID_Anfitrión, Tipo_Juego, Contraseña_Acceso, Estado_Mesa.</li>
+    </ul>
+  </li>
+  <br/>
+  
+</ul>
+</div>
+  
+</div>
+
+</body>
+</html>
