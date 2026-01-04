@@ -1,0 +1,171 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Proyecto Casino - Análisis de Funciones y Tareas</title>
+</head>
+<body class="papel" style="background-color:#F0F0C0;">
+<style>
+table.tabla tbody td { text-align:center;}
+table.tabla tbody td:first-child { text-align:justify}
+</style>
+<div class="bloque" style="font-family:arial;font-size:1.25em;text-align:justify;border:1.5mm solid #508050;margin:0.25em;padding:1em;">
+
+<div class="titulo titulo0" style="margin:5mm;font-size:2.0em;font-weight:bold;color:#4040F0">Casino Online - Gestión Integral</div>
+<div class="titulo titulo1" style="margin:5mm;font-size:2.0em;font-weight:bold">Planificación de 6 Grupos de Trabajo</div>
+
+<br/>
+&nbsp;&nbsp;&nbsp;A continuación se detalla el reparto de tareas. Cada grupo debe implementar el <strong>CRUD completo</strong>, las <strong>validaciones de datos</strong>, la <strong>conexión a BD</strong> y las <strong>plantillas de Frontend</strong> asociadas a su bloque.
+<br/>
+<br/>
+
+<hr/>
+
+<div class="titulo titulo3" style="margin:0.5em 0;padding:0.5em;font-size:1.0em;font-weight:bold;background-color:#60B0D0">Gestión Interna y Desarrollo Backend (Gx):</div>
+<div style="text-align:justify;margin:0em">
+
+<table class="tabla" border="1" style="background-color:#C0E0F0;border:4px ridge #70D0F0;border-collapse:collapse;font-size:0.95em;">
+<thead style="background-color:#60B0D0">
+<tr>
+<th style="width:73em;padding-left:2.5em;">Mantenimientos, Lógica y Base de Datos</th>
+<th style="width:3em;">G1</th>
+<th style="width:3em;">G2</th>
+<th style="width:3em;">G3</th>
+<th style="width:3em;">G4</th>
+<th style="width:3em;">G5</th>
+<th style="width:3em;">G6</th>
+</tr>
+</thead>
+<tbody>
+
+<tr><td style="padding-left:2em;"><strong>Mantenimiento de Usuarios y Perfiles (Clientes)</strong> </td>
+<td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">CRUD de Clientes: Registro, edición y baja de usuarios.</td>
+<td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Gestión de Niveles VIP (Bronce, Plata, Oro) y Puntos de Progreso.</td>
+<td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Validación de documentos (DNI/Selfie) y estados de cuenta.</td>
+<td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Mantenimiento Financiero (Monedero y Banco)</strong> </td>
+<td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">CRUD de Transacciones: Depósitos, Retiradas y Comisiones.</td>
+<td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Lógica de validación de saldo retirable vs saldo bloqueado por bonos.</td>
+<td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Integración de métodos de pago (Bizum, Crypto, Tarjeta).</td>
+<td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Mantenimiento de Catálogo de Juegos (CMS)</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">CRUD de Juegos: Título, Proveedor, RTP y Temáticas.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Control de estados: Activar/Desactivar e interruptor de "Mantenimiento".</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Gestión de imágenes de carátula y etiquetas "Nuevo" o "Caliente".</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Mantenimiento de Torneos y Competición</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">CRUD de Torneos: Buy-in, Bolsa de Premios y Fechas.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Lógica de inscripción automática y devolución de fondos.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Control de Participantes y Ranking de puntos final.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Mantenimiento de Seguridad y Auditoría (Logs)</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">CRUD de Visitas: Registro de IP, dispositivo y fecha/hora.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Gestión de Alertas de Fraude: Bot detection y patrones anómalos.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Sistema de Bloqueo/Ban de usuarios sospechosos.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Mantenimiento Social y Gamificación</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td></tr>
+<tr><td style="padding-left:4em;">CRUD de Logros: Nombre, descripción e iconos de trofeos.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td></tr>
+<tr><td style="padding-left:4em;">Gestión de Mesas Privadas con contraseña.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td></tr>
+<tr><td style="padding-left:4em;">Sistema de Afiliados: Tracking de enlaces y cálculo de comisiones.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td></tr>
+
+</tbody>
+</table>
+</div>
+
+<hr/>
+
+<div class="titulo titulo3" style="margin:0.5em 0;padding:0.5em;font-size:1.0em;font-weight:bold;background-color:#60C060">Funcionalidades del Portal Web y Frontend (Wx):</div>
+<div style="text-align:justify;margin:0em">
+
+<table class="tabla" border="1" style="background-color:#C0F0B0;border:4px ridge #70F070;border-collapse:collapse;font-size:0.95em;">
+<thead style="background-color:#60C060">
+<tr>
+<th style="width:73em;padding-left:2.5em;">Páginas Públicas y Vistas Dinámicas</th>
+<th style="width:3em;">W1</th>
+<th style="width:3em;">W2</th>
+<th style="width:3em;">W3</th>
+<th style="width:3em;">W4</th>
+<th style="width:3em;">W5</th>
+<th style="width:3em;">W6</th>
+</tr>
+</thead>
+<tbody>
+
+<tr><td style="padding-left:2em;"><strong>Área "Mi Cuenta" y Perfil Visual</strong> </td>
+<td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Plantilla de Cabecera: Avatar dinámico y Barra de Progreso VIP.</td>
+<td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Formularios de actualización de perfil con validación real-time.</td>
+<td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Interfaz del Monedero Virtual (Wallet)</strong> </td>
+<td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Vistas de Ingreso (One-Click) y Retirada con distinción de saldo.</td>
+<td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Gráficas circulares de control de gasto mensual por categoría.</td>
+<td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Lobby y Sala de Juego</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Grid Responsive de carátulas con filtros y buscador visual.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Vistas de juego con barra de saldo persistente.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Página de Competición y Torneos</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Escaparate: Tarjetas con cuenta atrás y premios garantizados.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Ranking en vivo: Tabla de líderes actualizada en tiempo real.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Seguridad y Histórico del Cliente</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Listado visual de Accesos y Transacciones con iconos distintivos.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td></tr>
+<tr><td style="padding-left:4em;">Panel de detalles técnicos al desplegar cada operación.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td><td>&nbsp;</td></tr>
+
+<tr><td style="padding-left:2em;"><strong>Gamificación y Social (Vistas)</strong> </td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td></tr>
+<tr><td style="padding-left:4em;">Muro de Logros: Medallero y trofeos desbloqueados.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td></tr>
+<tr><td style="padding-left:4em;">Chat de mesa con emojis y filtros de palabras ofensivas.</td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&check;</td></tr>
+
+</tbody>
+</table>
+</div>
+
+<hr/>
+
+<div style="background-color:#F0F080; padding:1em;">
+    <strong>Nota para los Grupos:</strong> Cada pareja (ej: G1 y W1) es responsable de la integridad de su módulo. La Base de datos va ha estar creada y enlazada al proyecto mediante(), la lógica de conexión, la validación de formularios tanto en cliente como en servidor, y el funcionamiento de las plantillas HTML finales.
+</div>
+
+</div>
+</body>
+</html>
