@@ -60,7 +60,7 @@ $this->title = 'Torneos y Competición';
                             </a>
 
                         <?php elseif ($yaEmpezo): ?>
-                            <a href="<?= Url::to(['torneo/unirse', 'id' => $torneo->id]) ?>" class="btn btn-danger btn-block btn-lg shadow">
+                            <a href="<?= Url::to(['torneo/jugar', 'id' => $torneo->id]) ?>" class="btn btn-danger btn-block btn-lg shadow">
                                 🔥 ¡Jugar Ahora!
                             </a>
                             <a href="<?= Url::to(['torneo/view', 'id' => $torneo->id]) ?>" class="btn btn-outline-danger btn-block btn-sm mt-2">
@@ -124,4 +124,4 @@ $script = <<< JS
 JS;
 
 $this->registerJs($script);
-?>s
+?>

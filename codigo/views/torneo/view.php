@@ -102,7 +102,7 @@ $this->title = $model->titulo;
                                              alt="👤" 
                                              class="rounded-circle mr-2 shadow-sm" 
                                              style="width: 40px; height: 40px; object-fit: cover; background-color: #eee;">
-                                                                            
+
                                         <span style="font-size: 1.1rem;">
                                             <?= Html::encode($participacion->usuario->nick) ?>
                                         </span>
@@ -126,7 +126,7 @@ $this->title = $model->titulo;
             <?php endif; ?>
         </div>
     </div>
-
+    
     <div class="mt-4 mb-5">
         <?= Html::a('⬅ Volver al Listado', ['index'], ['class' => 'btn btn-secondary']) ?>
     </div>

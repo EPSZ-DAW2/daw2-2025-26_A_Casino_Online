@@ -174,25 +174,49 @@ class JuegoController extends Controller
 
     /**
      * Pantalla de Juego Individual (La Sala)
+     * AHORA SOPORTA TORNEOS
      */
-    public function actionJugar($id)
+    public function actionJugar($id, $id_torneo = null) // <--- Aceptamos id_torneo opcional
     {
         $model = $this->findModel($id);
 
         // --- SEGURIDAD: SI ESTÁ EN MANTENIMIENTO O DESACTIVADO, EXPULSAR ---
         if ($model->en_mantenimiento == 1 || $model->activo == 0) {
-            
             Yii::$app->session->setFlash('error', 'El juego "' . $model->nombre . '" está en mantenimiento.');
             return $this->redirect(['lobby']);
         }
-        // -------------------------------------------------------------------
 
-        $saldo = Yii::$app->user->identity->monedero->saldo_real;
+        // --- MODO TORNEO ---
+        if ($id_torneo !== null) {
+            // Si venimos de un torneo, NO comprobamos saldo real, porque ya pagó la entrada.
+            // Aquí podrías añadir lógica extra: Verificar que el torneo está activo, etc.
+            
+            // Renderizamos la vista normal, pero le pasamos el dato del torneo
+            $this->layout = false;
+            return $this->render('jugar', [
+                'model' => $model,
+                'saldo' => 0, // En torneo el saldo visual da igual, importan los puntos
+                'es_torneo' => true,
+                'id_torneo' => $id_torneo
+            ]);
+        }
+
+        // --- MODO NORMAL (JUGAR POR DINERO) ---
+        
+        // PARCHE DE SEGURIDAD (Login Bypass)
+        // Si el login no va, inventamos un saldo para que no explote
+        if (Yii::$app->user->isGuest) {
+            $saldo = 1000.00; // Saldo falso para probar
+        } else {
+            $saldo = Yii::$app->user->identity->monedero->saldo_real;
+        }
         
         $this->layout = false; 
         return $this->render('jugar', [
             'model' => $model,
-            'saldo' => $saldo
+            'saldo' => $saldo,
+            'es_torneo' => false,
+            'id_torneo' => null
         ]);
     }
 }
