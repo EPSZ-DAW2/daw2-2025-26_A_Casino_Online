@@ -429,6 +429,15 @@ class JuegoController extends Controller
         $usuario = Yii::$app->user->identity;
         $monedero = $usuario->monedero;
 
+        // Evitar apuestas negativas o cero
+        if ($cantidad <= 0) {
+            return ['success' => false, 'mensaje' => 'La apuesta debe ser mayor a 0.'];
+        }
+        //Límite máximo de apuesta para no arruinar la banca
+        if ($cantidad > 1000) {
+            return ['success' => false, 'mensaje' => 'El límite máximo de apuesta es 1000€.'];
+        }
+
         if (!$monedero || $monedero->saldo_real < $cantidad) {
             return ['success' => false, 'mensaje' => 'Saldo insuficiente.'];
         }
