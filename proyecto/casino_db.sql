@@ -2,8 +2,8 @@
 -- BASE DE DATOS COMPLETA: CASINO ONLINE
 -- GRUPOS G1 A G6 - YII2 FRAMEWORK
 -- ==========================================
-DROP DATABASE IF EXISTS casino_db; -- Borra la anterior si existe (Cuidado, borra datos)
-CREATE DATABASE casino_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- DROP DATABASE IF EXISTS casino_db; -- Borra la anterior si existe (Cuidado, borra datos)
+CREATE DATABASE IF NOT EXISTS casino_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE casino_db;
 
 -- 1. MÓDULO DE USUARIOS (G1)
