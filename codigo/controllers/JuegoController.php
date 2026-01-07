@@ -269,6 +269,14 @@ class JuegoController extends Controller
 
         // Guardamos el nuevo saldo en la BD
         $monedero->save();
+        // REGISTRO PARA EL GRÁFICO (W2/G2)
+        $trans = new \app\models\Transaccion();
+        $trans->id_usuario = Yii::$app->user->id;
+        $trans->tipo_operacion = 'Apuesta';
+        $trans->categoria = 'Slots'; // Categoría para el gráfico
+        $trans->cantidad = $costeTirada;
+        $trans->estado = 'Completado';
+        $trans->save();
 
         // 7. Devolvemos el resultado al juego (JS)
         return [
@@ -368,6 +376,14 @@ class JuegoController extends Controller
             $monedero->saldo_real += $ganancia;
         }
         $monedero->save();
+        // REGISTRO PARA EL GRÁFICO (W2/G2)
+        $trans = new \app\models\Transaccion();
+        $trans->id_usuario = Yii::$app->user->id;
+        $trans->tipo_operacion = 'Apuesta';
+        $trans->categoria = 'Ruleta'; // Categoría para el gráfico
+        $trans->cantidad = $cantidadApuesta;
+        $trans->estado = 'Completado';
+        $trans->save();
 
         // 7. Devolver resultado (añadimos la cantidad para feedback visual)
         return [
@@ -459,6 +475,14 @@ class JuegoController extends Controller
         }
         $monedero->saldo_real -= $cantidad;
         $monedero->save();
+        // REGISTRO PARA EL GRÁFICO (W2/G2)
+        $trans = new \app\models\Transaccion();
+        $trans->id_usuario = Yii::$app->user->id;
+        $trans->tipo_operacion = 'Apuesta';
+        $trans->categoria = 'Cartas'; // Categoría para el gráfico
+        $trans->cantidad = $cantidad;
+        $trans->estado = 'Completado';
+        $trans->save();
 
         // Repartir cartas iniciales
         $manoJugador = [$this->generarCarta(), $this->generarCarta()];
