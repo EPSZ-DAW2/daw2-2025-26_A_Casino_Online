@@ -44,8 +44,8 @@ $identity = Yii::$app->user->identity;
         $menuItems = [
             ['label' => '🏠 Inicio', 'url' => ['/site/index']],
             // Enlaces placeholder para G3 y G4 (NO TOCAR)
-            ['label' => '🎰 Slots', 'url' => '#', 'linkOptions' => ['class' => 'text-warning']],
-            ['label' => '🎲 Ruleta', 'url' => '#'],
+            ['label' => '🎰 Sala de Juegos', 'url' => ['/juego/lobby'], 'linkOptions' => ['class' => 'text-warning']], 
+            ['label' => '🎲 Gestión (Solo Croupier)', 'url' => ['/juego/index'], 'visible' => $identity->puedeGestionarJuegos()],
             ['label' => '🏆 Torneos', 'url' => '#'],
         ];
 
@@ -88,11 +88,6 @@ $identity = Yii::$app->user->identity;
             // 3. GESTIÓN FINANCIERA (G2)
             if ($identity->puedeGestionarDinero()) {
                 $menuItems[] = ['label' => '💰 PAGOS', 'url' => ['/transaccion/index'], 'linkOptions' => ['class' => 'text-info fw-bold']];
-            }
-
-            // 4. GESTIÓN DE JUEGOS (G3)
-            if ($identity->puedeGestionarJuegos()) {
-                $menuItems[] = ['label' => '🎮 JUEGOS', 'url' => ['/juego/index']];
             }
         }
 
