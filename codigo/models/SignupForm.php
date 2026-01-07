@@ -13,6 +13,7 @@ class SignupForm extends Model
     public $email;
     public $password;
     public $password_repeat;
+    public $referral_code; // Nuevo campo para el código del afiliado
 
     /**
      * Reglas de validación para el registro
@@ -35,6 +36,8 @@ class SignupForm extends Model
             ['password', 'string', 'min' => 6],
 
             ['password_repeat', 'compare', 'compareAttribute' => 'password', 'message' => 'Las contraseñas no coinciden.'],
+
+            ['referral_code', 'string'], // Regla simple para el código
         ];
     }
 
@@ -54,11 +57,19 @@ class SignupForm extends Model
         $user->rol = 'jugador'; // Por defecto todos son jugadores
         $user->setPassword($this->password);
         $user->generateAuthKey();
-        
+
         // Inicializamos valores por defecto requeridos por tu BD
         $user->nivel_vip = 'Bronce';
         $user->puntos_progreso = 0;
         $user->estado_cuenta = 'Activo';
+
+        // LÓGICA DE AFILIADOS (G6)
+        if (!empty($this->referral_code)) {
+            $padrino = Usuario::findOne(['codigo_referido_propio' => $this->referral_code]);
+            if ($padrino) {
+                $user->id_padrino = $padrino->id;
+            }
+        }
 
         return $user->save();
     }
