@@ -90,23 +90,18 @@ class MensajeChat extends ActiveRecord
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            // Lista básica de palabras prohibidas (extensible)
+            // Diccionario de palabras prohibidas
             $badWords = ['tonto', 'estupido', 'fraude', 'robo', 'idiota'];
 
-            // Comprobar si contiene alguna mala palabra (case insensitive)
             foreach ($badWords as $word) {
+                // stripos busca sin importar mayúsculas/minúsculas
                 if (stripos($this->mensaje, $word) !== false) {
-                    // Opción A: Marcarlo como ofensivo y guardarlo (para revisión admin)
-                    $this->es_ofensivo = 1;
-
-                    // Opción B: Censurarlo con asteriscos ****
-                    // $this->mensaje = str_ireplace($word, '****', $this->mensaje);
-
-                    // En este caso elegimos censurarlo visualmente Y marcarlo
+                    $this->es_ofensivo = 1; // Marcamos para auditoría
+                    // Reemplazamos la palabra por asteriscos del mismo largo
                     $this->mensaje = str_ireplace($word, str_repeat('*', strlen($word)), $this->mensaje);
                 }
             }
-            return true;
+            return true; // Continúa con el guardado
         }
         return false;
     }
