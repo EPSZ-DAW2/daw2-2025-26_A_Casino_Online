@@ -1,60 +1,10 @@
-<?php /*
+<?php
 
- //** @var yii\web\View $this *
+use yii\helpers\Html;
+use yii\helpers\Url;
 
-$this->title = 'My Yii Application';
-?>
-<div class="site-index">
-
-    <div class="jumbotron text-center bg-transparent">
-        <h1 class="display-4">Congratulations!</h1>
-
-        <p class="lead">You have successfully created your Yii-powered application.</p>
-
-        <p><a class="btn btn-lg btn-success" href="http://www.yiiframework.com">Get started with Yii</a></p>
-    </div>
-
-    <div class="body-content">
-
-        <div class="row">
-            <div class="col-lg-4">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="http://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p>
-            </div>
-            <div class="col-lg-4">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="http://www.yiiframework.com/forum/">Yii Forum &raquo;</a></p>
-            </div>
-            <div class="col-lg-4">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="http://www.yiiframework.com/extensions/">Yii Extensions &raquo;</a></p>
-            </div>
-        </div>
-
-    </div>
-</div>
-*/
-
-//Index de la pagian web
 /** @var yii\web\View $this */
+/** @var app\models\Juego[] $juegosDestacados */
 
 $this->title = 'Royal Casino - Inicio';
 ?>
@@ -65,9 +15,9 @@ $this->title = 'Royal Casino - Inicio';
             <h1 class="display-4 fw-bold text-warning">🎰 ¡Bienvenido a la Suerte!</h1>
             <p class="fs-4">Los mejores juegos, torneos en vivo y premios instantáneos.</p>
             <?php if (Yii::$app->user->isGuest): ?>
-                <a class="btn btn-warning btn-lg px-5 fw-bold" href="<?= \yii\helpers\Url::to(['site/signup']) ?>">¡REGÍSTRATE AHORA!</a>
+                <a class="btn btn-warning btn-lg px-5 fw-bold" href="<?= Url::to(['site/signup']) ?>">¡REGÍSTRATE AHORA!</a>
             <?php else: ?>
-                <button class="btn btn-outline-light btn-lg disabled">Bonos Activos: 0</button>
+                <a class="btn btn-outline-warning btn-lg px-5" href="<?= Url::to(['juego/lobby']) ?>">Ir al Casino</a>
             <?php endif; ?>
         </div>
     </div>
@@ -84,69 +34,65 @@ $this->title = 'Royal Casino - Inicio';
         </div>
     </div>
 
-    <h3 class="border-bottom pb-2 mb-4 border-warning text-uppercase">🌟 Los Más Jugados</h3>
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-warning pb-2">
+        <h3 class="text-uppercase m-0">🌟 Últimas Novedades</h3>
+        <?= Html::a('Ver Catálogo Completo (Lobby) ➡️', ['/juego/lobby'], ['class' => 'btn btn-outline-dark btn-sm']) ?>
+    </div>
     
     <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
         
-        <div class="col">
-            <div class="card h-100 shadow-sm border-0 game-card">
-                <div style="height: 180px; background-color: #333; color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem;">🍒</div>
-                <div class="card-body text-center bg-light">
-                    <h5 class="card-title fw-bold">Super Slots 777</h5>
-                    <p class="card-text text-muted small">Proveedor: NetEnt</p>
-                    <a href="#" class="btn btn-dark w-100 disabled">Jugar Ahora</a>
-                </div>
-                <div class="card-footer bg-transparent border-0 text-center pb-3">
-                     <small class="text-success fw-bold">RTP: 96.5%</small>
-                </div>
-            </div>
-        </div>
+        <?php if (count($juegosDestacados) > 0): ?>
+            
+            <?php foreach ($juegosDestacados as $juego): ?>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 game-card">
+                        
+                        <div style="height: 180px; background-color: #000; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <?php if ($juego->url_caratula): ?>
+                                <?= Html::img('@web/' . $juego->url_caratula, [
+                                    'alt' => $juego->nombre,
+                                    'style' => 'width: 100%; height: 100%; object-fit: cover;'
+                                ]) ?>
+                            <?php else: ?>
+                                <span style="font-size: 3rem;">
+                                    <?= ($juego->tipo == 'Slot') ? '🍒' : (($juego->tipo == 'Ruleta') ? '🎡' : '🃏') ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
 
-        <div class="col">
-            <div class="card h-100 shadow-sm border-0 game-card">
-                <div style="height: 180px; background-color: #004d00; color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem;">🃏</div>
-                <div class="card-body text-center bg-light">
-                    <h5 class="card-title fw-bold">Blackjack Pro</h5>
-                    <p class="card-text text-muted small">Proveedor: Playtech</p>
-                    <a href="#" class="btn btn-dark w-100 disabled">Jugar Ahora</a>
+                        <div class="card-body text-center bg-light">
+                            <h5 class="card-title fw-bold text-truncate"><?= Html::encode($juego->nombre) ?></h5>
+                            <p class="card-text text-muted small"><?= Html::encode($juego->proveedor) ?></p>
+                            
+                            <?php if ($juego->en_mantenimiento): ?>
+                                <button class="btn btn-secondary btn-sm w-100 disabled">Mantenimiento</button>
+                            <?php else: ?>
+                                <?= Html::a('Jugar Ahora', ['juego/jugar', 'id' => $juego->id], ['class' => 'btn btn-dark btn-sm w-100']) ?>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent border-0 text-center pb-3">
+                             <small class="text-success fw-bold">RTP: <?= $juego->rtp ?>%</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-center pb-3">
-                     <small class="text-primary fw-bold">Mesas en Vivo</small>
-                </div>
-            </div>
-        </div>
+            <?php endforeach; ?>
 
-        <div class="col">
-            <div class="card h-100 shadow-sm border-0 game-card">
-                <div style="height: 180px; background-color: #800000; color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem;">🎡</div>
-                <div class="card-body text-center bg-light">
-                    <h5 class="card-title fw-bold">Ruleta Europea</h5>
-                    <p class="card-text text-muted small">Proveedor: Evolution</p>
-                    <a href="#" class="btn btn-dark w-100 disabled">Jugar Ahora</a>
-                </div>
-                <div class="card-footer bg-transparent border-0 text-center pb-3">
-                     <small class="text-danger fw-bold">Hot: Rojo</small>
-                </div>
+        <?php else: ?>
+            
+            <div class="col-12 text-center py-5">
+                <h4 class="text-muted">No hay juegos destacados en este momento.</h4>
+                <p>Ve al panel de administración para crear tu primer juego.</p>
+                <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->puedeGestionarJuegos()): ?>
+                    <?= Html::a('➕ Crear Juego Nuevo', ['/juego/create'], ['class' => 'btn btn-primary']) ?>
+                <?php endif; ?>
             </div>
-        </div>
-        
-        <div class="col">
-            <div class="card h-100 shadow-sm border-0 game-card">
-                <div style="height: 180px; background-color: #d4af37; color: black; display: flex; align-items: center; justify-content: center; font-size: 3rem;">🏺</div>
-                <div class="card-body text-center bg-light">
-                    <h5 class="card-title fw-bold">Book of Ra</h5>
-                    <p class="card-text text-muted small">Proveedor: Novomatic</p>
-                    <a href="#" class="btn btn-dark w-100 disabled">Jugar Ahora</a>
-                </div>
-                <div class="card-footer bg-transparent border-0 text-center pb-3">
-                     <small class="text-success fw-bold">RTP: 95%</small>
-                </div>
-            </div>
-        </div>
+
+        <?php endif; ?>
 
     </div>
     
     <div class="text-center mt-5">
-        <button class="btn btn-outline-dark">Ver Catálogo Completo (G3)</button>
+        <?= Html::a('Explorar todos los Juegos', ['/juego/lobby'], ['class' => 'btn btn-outline-dark btn-lg']) ?>
     </div>
 </div>
