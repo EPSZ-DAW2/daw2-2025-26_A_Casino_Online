@@ -43,9 +43,10 @@ $identity = Yii::$app->user->identity;
         // --- MENÚ IZQUIERDO (Navegación Principal) ---
         $menuItems = [
             ['label' => '🏠 Inicio', 'url' => ['/site/index']],
-            // Enlaces placeholder para G3 y G4 (NO TOCAR)
-            ['label' => '🎰 Sala de Juegos', 'url' => ['/juego/lobby'], 'linkOptions' => ['class' => 'text-warning']], 
-            ['label' => '🎲 Gestión (Solo Croupier)', 'url' => ['/juego/index'], 'visible' => $identity->puedeGestionarJuegos()],
+            // Enlaces placeholder para G3 y G4
+            ['label' => '🎰 Sala de Juegos', 'url' => ['/juego/lobby'], 'linkOptions' => ['class' => 'text-warning']],
+            ['label' => '🤫 Mesas Privadas', 'url' => ['/mesa-privada/index'], 'linkOptions' => ['class' => 'text-success']],
+            ['label' => '🎲 Gestión (Solo Croupier)', 'url' => ['/juego/index'], 'visible' => ($identity && $identity->puedeGestionarJuegos())],
             ['label' => '🏆 Torneos', 'url' => '#'],
         ];
 
@@ -76,7 +77,7 @@ $identity = Yii::$app->user->identity;
                     // Si falla la base de datos, no hacemos nada
                 }
                 // --- FIN LÓGICA ---
-
+        
                 // Botón del Grupo 5 (Fraude + Bolita Roja)
                 $menuItems[] = [
                     'label' => '🚨 FRAUDE' . $badgeHTML, // Añadimos la bolita al texto
@@ -128,7 +129,9 @@ $identity = Yii::$app->user->identity;
 
             echo '<ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="userDropdown">';
             echo '<li>' . Html::a('👤 Mi Perfil', ['/site/perfil'], ['class' => 'dropdown-item']) . '</li>';
+            echo '<li>' . Html::a('🏆 Mi Sala de Trofeos', ['/gamificacion/index'], ['class' => 'dropdown-item']) . '</li>';
             echo '<li>' . Html::a('💳 Mi Monedero', ['/monedero/index'], ['class' => 'dropdown-item']) . '</li>';
+            echo '<li>' . Html::a('🕵️ Panel Afiliados', ['/afiliado/index'], ['class' => 'dropdown-item']) . '</li>';
             echo '<li><hr class="dropdown-divider"></li>';
             echo '<li>' . Html::beginForm(['/site/logout'])
                 . Html::submitButton('Cerrar Sesión', ['class' => 'dropdown-item text-danger'])

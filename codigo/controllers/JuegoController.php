@@ -73,18 +73,18 @@ class JuegoController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
-                
+
                 // 1. Instanciar la imagen
                 $model->archivoImagen = UploadedFile::getInstance($model, 'archivoImagen');
 
                 // 2. IMPORTANTE: Validamos el modelo AQUÍ, mientras la imagen sigue en la carpeta temporal
                 if ($model->validate()) {
-                    
+
                     // Si la validación pasa, procedemos a mover el archivo
                     if ($model->archivoImagen) {
                         $nombreArchivo = 'juego_' . time() . '_' . $model->archivoImagen->baseName . '.' . $model->archivoImagen->extension;
                         $rutaCarpeta = Yii::getAlias('@webroot') . '/uploads/';
-                        
+
                         // Guardamos el archivo físico
                         if ($model->archivoImagen->saveAs($rutaCarpeta . $nombreArchivo)) {
                             $model->url_caratula = 'uploads/' . $nombreArchivo;
@@ -92,8 +92,8 @@ class JuegoController extends Controller
                     }
 
                     // 3. Guardamos en BD poniendo 'false' para que NO valide de nuevo (evita el error de archivo no encontrado)
-                    $model->save(false); 
-                    
+                    $model->save(false);
+
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
             }
@@ -181,15 +181,19 @@ class JuegoController extends Controller
 
         // --- SEGURIDAD: SI ESTÁ EN MANTENIMIENTO O DESACTIVADO, EXPULSAR ---
         if ($model->en_mantenimiento == 1 || $model->activo == 0) {
-            
+
             Yii::$app->session->setFlash('error', 'El juego "' . $model->nombre . '" está en mantenimiento.');
             return $this->redirect(['lobby']);
         }
         // -------------------------------------------------------------------
 
-        $saldo = Yii::$app->user->identity->monedero->saldo_real;
-        
-        $this->layout = false; 
+        if (Yii::$app->user->identity->monedero) {
+            $saldo = Yii::$app->user->identity->monedero->saldo_real;
+        } else {
+            $saldo = 0.00; // Si no tiene monedero, saldo 0 para que no rompa
+        }
+
+        $this->layout = false;
         return $this->render('jugar', [
             'model' => $model,
             'saldo' => $saldo
@@ -203,28 +207,28 @@ class JuegoController extends Controller
     public function actionApiGirarSlot($id)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
+
         // Cargamos el Juego y el Usuario
         $juego = $this->findModel($id);
         $usuario = Yii::$app->user->identity;
-        $monedero = $usuario->monedero; 
+        $monedero = $usuario->monedero;
 
         // Coste de la tirada, 
-        $costeTirada = 1.00; 
+        $costeTirada = 1.00;
 
         // Validaciones de Seguridad
         if (!$monedero || $monedero->saldo_real < $costeTirada) {
             return ['success' => false, 'mensaje' => 'Saldo insuficiente. Recarga tu cuenta.'];
         }
-        
+
         // Cobramos la entrada
         $monedero->saldo_real -= $costeTirada;
-        
+
         // LÓGICA DEL JUEGO 
         // Definimos los símbolos posibles
-        $simbolos = ['🍒', '🍋', '🍇', '💎', '🔔']; 
+        $simbolos = ['🍒', '🍋', '🍇', '💎', '🔔'];
         //Todos tienen la misma probabilidad ahora mismo
-        
+
         $resultado = [
             $simbolos[array_rand($simbolos)], // Rodillo 1
             $simbolos[array_rand($simbolos)], // Rodillo 2
@@ -238,12 +242,18 @@ class JuegoController extends Controller
         // Regla: Si los 3 símbolos son iguales
         if ($resultado[0] === $resultado[1] && $resultado[1] === $resultado[2]) {
             $esVictoria = true;
-            
+
             // Tabla de Pagos simple
             switch ($resultado[0]) {
-                case '💎': $ganancia = 50.00; break; // Jackpot
-                case '🔔': $ganancia = 20.00; break;
-                default:   $ganancia = 5.00;  break; // Frutas normales
+                case '💎':
+                    $ganancia = 50.00;
+                    break; // Jackpot
+                case '🔔':
+                    $ganancia = 20.00;
+                    break;
+                default:
+                    $ganancia = 5.00;
+                    break; // Frutas normales
             }
         }
         // Si salen dos cerezas al principio
@@ -280,13 +290,13 @@ class JuegoController extends Controller
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $request = Yii::$app->request;
-        
+
         // Recogemos los datos y la cantidad apostada
         $tipoApuesta = $request->post('tipoApuesta');
         $valorApuesta = $request->post('valorApuesta');
-        
+
         // Convertimos a float y si no envían nada, asumimos 1€ por seguridad
-        $cantidadApuesta = (float)$request->post('cantidadApuesta', 1.00);
+        $cantidadApuesta = (float) $request->post('cantidadApuesta', 1.00);
 
         // Evitar apuestas negativas o cero
         if ($cantidadApuesta <= 0) {
@@ -296,7 +306,7 @@ class JuegoController extends Controller
         if ($cantidadApuesta > 1000) {
             return ['success' => false, 'mensaje' => 'El límite máximo de apuesta es 1000€.'];
         }
-        
+
         // Cargar Usuario y Monedero
         $juego = $this->findModel($id);
         $usuario = Yii::$app->user->identity;
@@ -312,12 +322,14 @@ class JuegoController extends Controller
 
         // girar la ruleta
         $numeroGanador = rand(0, 36);
-        
+
         // Lógica de colores
         $rojos = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-        $colorGanador = 'verde'; 
-        if (in_array($numeroGanador, $rojos)) $colorGanador = 'rojo';
-        elseif ($numeroGanador != 0) $colorGanador = 'negro';
+        $colorGanador = 'verde';
+        if (in_array($numeroGanador, $rojos))
+            $colorGanador = 'rojo';
+        elseif ($numeroGanador != 0)
+            $colorGanador = 'negro';
 
         $paridadGanadora = ($numeroGanador != 0 && $numeroGanador % 2 == 0) ? 'par' : 'impar';
 
@@ -330,15 +342,15 @@ class JuegoController extends Controller
                 if ($numeroGanador == intval($valorApuesta)) {
                     $esVictoria = true;
                     // Pleno: Paga 35 a 1 + la apuesta (Total x36)
-                    $ganancia = $cantidadApuesta * 36; 
+                    $ganancia = $cantidadApuesta * 36;
                 }
                 break;
-            
+
             case 'color':
                 if ($colorGanador == $valorApuesta) {
                     $esVictoria = true;
                     // Color: Paga 1 a 1 (Doblas la apuesta)
-                    $ganancia = $cantidadApuesta * 2; 
+                    $ganancia = $cantidadApuesta * 2;
                 }
                 break;
 
@@ -346,7 +358,7 @@ class JuegoController extends Controller
                 if ($numeroGanador != 0 && $paridadGanadora == $valorApuesta) {
                     $esVictoria = true;
                     // Par/Impar: Paga 1 a 1
-                    $ganancia = $cantidadApuesta * 2; 
+                    $ganancia = $cantidadApuesta * 2;
                 }
                 break;
         }
@@ -376,13 +388,14 @@ class JuegoController extends Controller
     /**
      * Genera una carta aleatoria 
      */
-    private function generarCarta() {
+    private function generarCarta()
+    {
         $palos = ['♥', '♦', '♣', '♠'];
         $valores = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        
+
         $palo = $palos[array_rand($palos)];
         $valor = $valores[array_rand($valores)];
-        
+
         // Calculamos el valor numérico
         $puntos = 0;
         if (is_numeric($valor)) {
@@ -399,13 +412,15 @@ class JuegoController extends Controller
     /**
      * Calcula el total de una mano ajustando los Ases
      */
-    private function calcularMano($cartas) {
+    private function calcularMano($cartas)
+    {
         $total = 0;
         $ases = 0;
 
         foreach ($cartas as $c) {
             $total += $c['puntos'];
-            if ($c['valor'] === 'A') $ases++;
+            if ($c['valor'] === 'A')
+                $ases++;
         }
 
         // Si nos pasamos de 21 y tenemos Ases, los convertimos de 11 a 1
@@ -420,12 +435,13 @@ class JuegoController extends Controller
     /**
      * INicio de la partida
      */
-    public function actionApiBlackjackIniciar($id) {
+    public function actionApiBlackjackIniciar($id)
+    {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $session = Yii::$app->session;
-        
+
         // Cobrar apuesta
-        $cantidad = (float)Yii::$app->request->post('cantidadApuesta', 1.00);
+        $cantidad = (float) Yii::$app->request->post('cantidadApuesta', 1.00);
         $usuario = Yii::$app->user->identity;
         $monedero = $usuario->monedero;
 
@@ -466,12 +482,13 @@ class JuegoController extends Controller
     /**
      * Pedir carta
      */
-    public function actionApiBlackjackPedir() {
+    public function actionApiBlackjackPedir()
+    {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $session = Yii::$app->session;
 
         $manoJugador = $session->get('bj_mano_jugador');
-        
+
         // Dar carta
         $nuevaCarta = $this->generarCarta();
         $manoJugador[] = $nuevaCarta;
@@ -503,10 +520,11 @@ class JuegoController extends Controller
     /**
      * Plantarse 
      */
-    public function actionApiBlackjackPlantarse() {
+    public function actionApiBlackjackPlantarse()
+    {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $session = Yii::$app->session;
-        
+
         $manoJugador = $session->get('bj_mano_jugador');
         $manoDealer = $session->get('bj_mano_dealer');
         $apuesta = $session->get('bj_apuesta');
@@ -542,7 +560,7 @@ class JuegoController extends Controller
         // Pagos
         $usuario = Yii::$app->user->identity;
         $monedero = $usuario->monedero;
-        
+
         if ($victoria) {
             $monedero->saldo_real += ($apuesta * 2); // Devuelve apuesta + ganancia
         } elseif ($empate) {

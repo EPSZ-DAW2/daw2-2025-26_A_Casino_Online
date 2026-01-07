@@ -153,10 +153,18 @@ class MesaPrivadaController extends Controller
             ->orderBy(['fecha_envio' => SORT_ASC]) // Los viejos arriba (estilo chat normal)
             ->all();
 
+        // INTEGRACIÓN G3/G4: Buscar el juego real para incrustarlo
+        // Buscamos un juego cuyo nombre contenga el tipo de la mesa (Búsqueda laxa)
+        $juegoAsociado = \app\models\Juego::find()
+            ->where(['like', 'nombre', $mesa->tipo_juego])
+            ->orWhere(['like', 'tipo', $mesa->tipo_juego]) // Por si pone "Ruleta"
+            ->one();
+
         return $this->render('room', [
             'mesa' => $mesa,
             'chatModel' => $nuevoMensaje,
             'mensajes' => $mensajes,
+            'juegoAsociado' => $juegoAsociado, // Pasamos el juego encontrado (o null)
         ]);
     }
 

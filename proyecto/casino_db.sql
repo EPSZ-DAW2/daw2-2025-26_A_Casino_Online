@@ -85,6 +85,12 @@ CREATE TABLE juego (
     estado_racha ENUM('Caliente', 'Fria', 'Neutro') DEFAULT 'Neutro'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- DATOS POR DEFECTO: JUEGOS (G3)
+INSERT INTO juego (nombre, proveedor, tipo, rtp, activo) VALUES 
+('Blackjack VIP', 'Evolution Gaming', 'Cartas', 99.5, 1),
+('Ruleta Europea VIP', 'Playtech', 'Ruleta', 97.3, 1),
+('Super Fruits Slot', 'NetEnt', 'Slot', 96.0, 1);
+
 CREATE TABLE historial_partida (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,

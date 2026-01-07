@@ -25,7 +25,7 @@ class LogVisitaController extends Controller
                 'rules' => [
                     // Regla 1: Acciones públicas para usuarios logueados
                     [
-                        'actions' => ['mis-visitas', 'view'], // 'view' es tu panel bonito
+                        'actions' => ['mis-visitas', 'view'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -34,7 +34,7 @@ class LogVisitaController extends Controller
                         'actions' => ['index', 'delete'],
                         'allow' => true,
                         'matchCallback' => function ($rule, $action) {
-                            return Yii::$app->user->identity->username === 'admin';
+                            return Yii::$app->user->identity->puedeAccederBackend();
                         }
                     ],
                 ],

@@ -18,12 +18,21 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <!-- Tipo de Juego -->
-    <?= $form->field($model, 'tipo_juego')->dropDownList([
-        'Poker Texas Hold\'em' => 'Poker Texas Hold\'em',
-        'Blackjack' => 'Blackjack',
-        'Ruleta Europea' => 'Ruleta Europea'
-    ], ['prompt' => 'Selecciona un juego...']) ?>
+    <!-- Tipo de Juego (INTEGRACIÓN DINÁMICA) -->
+    <?php
+    // Recuperamos los juegos activos de la base de datos para que el nombre coincida EXACTAMENTE
+    // y el iframe cargue correctamente.
+    $juegosDisponibles = \yii\helpers\ArrayHelper::map(
+        \app\models\Juego::find()->where(['activo' => 1])->all(),
+        'nombre',
+        'nombre' // Usamos el nombre como valor guardado
+    );
+    ?>
+
+    <?= $form->field($model, 'tipo_juego')->dropDownList(
+        $juegosDisponibles,
+        ['prompt' => 'Selecciona un juego del catálogo...']
+    ) ?>
 
     <!-- Contraseña -->
     <?= $form->field($model, 'contrasena_acceso')->passwordInput(['maxlength' => true, 'placeholder' => '(Opcional) Deja en blanco para mesa abierta']) ?>
