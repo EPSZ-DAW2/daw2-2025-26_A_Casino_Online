@@ -42,17 +42,19 @@ class AfiliadoController extends Controller
         $usuario = Yii::$app->user->identity;
 
         // 1. Verificar si tiene código propio, si no, generarlo
+        // 1. AUTOGENERACIÓN DE CÓDIGO (Lógica G6)
+        // Si es la primera vez que entra y no tiene código, se lo creamos.
         if (empty($usuario->codigo_referido_propio)) {
             $usuario->codigo_referido_propio = $this->generarCodigoUnico($usuario->id);
-            // Guardamos sin validar todo el modelo para evitar errores de otros campos G1
             $usuario->save(false, ['codigo_referido_propio']);
         }
 
-        // 2. Obtener lista de afiliados (Ahijados)
+        // 2. OBTENCIÓN DE REFERIDOS
+        // Usamos la relación 'getAfiliados' definida en el Modelo Usuario
         $afiliados = $usuario->getAfiliados()->all();
 
-        // 3. Simular cálculo de comisiones (En prod esto vendría de tabla Transacciones)
-        // Por ahora, asumimos que ganamos 10€ por cada afiliados verificado como "Bonus de Bienvenida"
+        // 3. CÁLCULO DE COMISIONES (Simulado)
+        // Ejemplo: 10€ por cada usuario que haya verificado su cuenta (KYC)
         $comisionTotal = 0;
         foreach ($afiliados as $ahijado) {
             if ($ahijado->esVerificado()) {

@@ -127,7 +127,7 @@ class MesaPrivadaController extends Controller
         $mesa = $this->findModel($id);
 
         // Verificación de seguridad: ¿Tiene permiso para estar aquí?
-        // El anfitrión siempre pasa, los demás necesitan la flag de sesión
+        // El anfitrión siempre entra. Los invitados deben haber pasado por actionJoin (tener sesión).
         $esAnfitrion = ($mesa->id_anfitrion === Yii::$app->user->id);
         if (!$esAnfitrion && !Yii::$app->session->has("acceso_mesa_{$id}")) {
             return $this->redirect(['join', 'id' => $id]);
@@ -153,11 +153,12 @@ class MesaPrivadaController extends Controller
             ->orderBy(['fecha_envio' => SORT_ASC]) // Los viejos arriba (estilo chat normal)
             ->all();
 
-        // INTEGRACIÓN G3/G4: Buscar el juego real para incrustarlo
-        // Buscamos un juego cuyo nombre contenga el tipo de la mesa (Búsqueda laxa)
+        // INTEGRACIÓN G3/G4: Conexión con el Módulo de Juegos
+        // Buscamos si existe un juego en BD que coincida con el nombre de la mesa.
+        // Si existe, lo pasaremos a la vista para cargarlo en el Iframe.
         $juegoAsociado = \app\models\Juego::find()
             ->where(['like', 'nombre', $mesa->tipo_juego])
-            ->orWhere(['like', 'tipo', $mesa->tipo_juego]) // Por si pone "Ruleta"
+            ->orWhere(['like', 'tipo', $mesa->tipo_juego]) // Por si pone "Ruleta" generico
             ->one();
 
         return $this->render('room', [
