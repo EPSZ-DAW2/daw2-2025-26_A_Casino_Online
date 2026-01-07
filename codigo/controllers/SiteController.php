@@ -105,6 +105,13 @@ class SiteController extends Controller
     public function actionSignup()
     {
         $model = new SignupForm();
+
+        // G6: Capturar código de referido si viene por URL
+        $refCode = Yii::$app->request->get('ref');
+        if ($refCode) {
+            $model->referral_code = $refCode;
+        }
+
         if ($model->load(Yii::$app->request->post()) && $model->signup()) {
             Yii::$app->session->setFlash('success', 'Gracias por registrarte. Por favor inicia sesión.');
             return $this->redirect(['site/login']);
@@ -166,9 +173,9 @@ class SiteController extends Controller
 
         /** @var \app\models\Usuario $model */
         $model = Yii::$app->user->identity;
-        
+
         if ($this->request->isPost && $model->load($this->request->post())) {
-            
+
             // --- Lógica del Avatar ---
             $archivoAvatar = \yii\web\UploadedFile::getInstance($model, 'avatar_url');
             if ($archivoAvatar) {
