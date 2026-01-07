@@ -11,6 +11,7 @@ use app\models\LoginForm;
 use app\models\ContactForm;
 use app\models\SignupForm;
 use yii\web\UploadedFile;
+use app\models\Juego;
 
 class SiteController extends Controller
 {
@@ -63,7 +64,16 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        // Si no has creado juegos aún, esto devolverá una lista vacía.
+        $juegosDestacados = Juego::find()
+            ->where(['activo' => 1])
+            ->limit(4) // Solo queremos 4 para que quede bonito
+            ->orderBy(['id' => SORT_DESC]) // Los más nuevos primero
+            ->all();
+
+        return $this->render('index', [
+            'juegosDestacados' => $juegosDestacados,
+        ]);
     }
 
     /**
