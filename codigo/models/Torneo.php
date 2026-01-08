@@ -159,4 +159,47 @@ class Torneo extends \yii\db\ActiveRecord
             return false;
         }
     }
+
+    /**
+     * LÓGICA MAESTRA DEL TORNEO
+     * Comprueba las fechas y actualiza el estado automáticamente.
+     * 1. Futuro -> Abierto
+     * 2. Presente -> En Curso
+     * 3. Pasado -> Finalizado
+     */
+    public function actualizarEstadoEnBaseAlTiempo()
+    {
+        // Si está cancelado, no lo tocamos
+        if ($this->estado === 'Cancelado') {
+            return;
+        }
+
+        $ahora = time();
+        $inicio = strtotime($this->fecha_inicio);
+        $fin = strtotime($this->fecha_fin);
+
+        // CASO 1: FIN DEL TORNEO (Ya pasó la fecha fin)
+        if ($ahora > $fin && $this->estado !== 'Finalizado') {
+            // Llamamos a la lógica de repartir premios que hicimos antes
+            // (Si no tienes el código de finalizar aquí, avísame, pero asumo que lo tienes del paso anterior)
+            $this->comprobarFinalizacionAutomatica(); 
+            return;
+        }
+
+        // CASO 2: INICIO DEL TORNEO (Estamos entre inicio y fin)
+        // Si estaba 'Abierto' y ya llegó la hora, lo ponemos 'En Curso'
+        if ($ahora >= $inicio && $ahora <= $fin && $this->estado === 'Abierto') {
+            $this->estado = 'En Curso';
+            $this->save(false);
+            return;
+        }
+
+        // CASO 3: ANTES DEL TORNEO (Aún no ha llegado la fecha inicio)
+        // Si por error se creó como 'En Curso' pero la fecha es futura, lo corregimos a 'Abierto'
+        if ($ahora < $inicio && $this->estado !== 'Abierto') {
+            $this->estado = 'Abierto';
+            $this->save(false);
+            return;
+        }
+    }
 }

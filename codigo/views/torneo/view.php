@@ -89,23 +89,31 @@ $this->title = $model->titulo;
                 </div>
             <?php endif; ?>
 
-            <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin()): ?>
+            <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->puedeGestionarUsuarios()): ?>
+                
                 <hr class="border-light mt-4">
-                <div class="btn-group">
-                    <?= Html::a('✏ Editar', ['update', 'id' => $model->id], ['class' => 'btn btn-outline-light btn-sm']) ?>
+                <div class="d-flex justify-content-center gap-2">
+                    
+                    <?= Html::a('✏ Editar Configuración', ['update', 'id' => $model->id], ['class' => 'btn btn-outline-light btn-sm']) ?>
+                    
                     <?php if ($model->estado !== 'Cancelado' && $model->estado !== 'Finalizado'): ?>
-                        <?= Html::a('🛑 Finalizar Torneo', ['finalizar', 'id' => $model->id], [
-                            'class' => 'btn btn-warning btn-sm',
-                            'data' => ['confirm' => '¿Cerrar torneo y dar premios?', 'method' => 'post']
+                        
+                        <?= Html::a('🛑 Finalizar Ahora', ['finalizar', 'id' => $model->id], [
+                            'class' => 'btn btn-warning btn-sm text-dark font-weight-bold',
+                            'data' => ['confirm' => '¿Seguro que quieres cerrar el torneo y repartir premios manualmente?', 'method' => 'post']
                         ]) ?>
-                        <?= Html::a('⚠ Cancelar', ['cancelar', 'id' => $model->id], [
-                            'class' => 'btn btn-danger btn-sm',
-                            'data' => ['confirm' => '¿CANCELAR TORNEO? Se devolverá el dinero.', 'method' => 'post']
+                        
+                        <?= Html::a('💣 CANCELAR Y DEVOLVER DINERO', ['cancelar', 'id' => $model->id], [
+                            'class' => 'btn btn-danger btn-sm font-weight-bold',
+                            'data' => [
+                                'confirm' => '¡PELIGRO! ¿Estás seguro de CANCELAR este torneo? Se devolverá el dinero a todos los participantes automáticamente.',
+                                'method' => 'post'
+                            ]
                         ]) ?>
+                        
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
-        </div>
 
     <div class="row">
         <div class="col-md-8 offset-md-2">

@@ -62,17 +62,18 @@ class TorneoController extends Controller
      */
     public function actionIndex()
     {
-        // --- AUTO-CIERRE DE TORNEOS ---
-        // Buscamos todos los torneos que sigan "En Curso"
-        $torneosEnCurso = \app\models\Torneo::find()
-            ->where(['estado' => 'En Curso'])
+        // --- AUTOMATIZACIÓN DE ESTADOS ---
+        // Buscamos torneos que no estén cancelados ni finalizados para actualizarlos
+        $torneosActivos = \app\models\Torneo::find()
+            ->where(['!=', 'estado', 'Cancelado'])
+            ->andWhere(['!=', 'estado', 'Finalizado'])
             ->all();
 
-        foreach ($torneosEnCurso as $torneo) {
-            // Cada torneo comprueba su fecha y se cierra si toca
-            $torneo->comprobarFinalizacionAutomatica();
+        foreach ($torneosActivos as $torneo) {
+            // Esta función ajustará si debe estar Abierto, En Curso o Finalizado
+            $torneo->actualizarEstadoEnBaseAlTiempo();
         }
-        // ------------------------------
+        // ---------------------------------
 
         $searchModel = new TorneoSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
@@ -329,14 +330,27 @@ public function actionUnirse($id)
     {
         $model = new Torneo();
 
-        if ($model->load(Yii::$app->request->post())) {
-            // Parche fechas HTML5
-            $model->fecha_inicio = str_replace('T', ' ', $model->fecha_inicio);
-            $model->fecha_fin = str_replace('T', ' ', $model->fecha_fin);
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post())) {
+                
+                // --- INTELIGENCIA ARTIFICIAL DE ESTADOS ---
+                // Antes de guardar, decidimos el estado inicial según las fechas
+                $ahora = time();
+                $inicio = strtotime($model->fecha_inicio);
+                
+                if ($ahora < $inicio) {
+                    $model->estado = 'Abierto'; // Futuro = Pre-inscripción
+                } else {
+                    $model->estado = 'En Curso'; // Pasado/Presente = A jugar
+                }
+                // ------------------------------------------
 
-            if ($model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+                if ($model->save()) {
+                    return $this->redirect(['view', 'id' => $model->id]);
+                }
             }
+        } else {
+            $model->loadDefaultValues();
         }
 
         return $this->render('create', [
@@ -366,39 +380,61 @@ public function actionUnirse($id)
     }
 
     /**
-     * Cancelar Torneo y Devolver Dinero
+     * ACCIÓN DE EMERGENCIA: Cancelar torneo y reembolsar inscripciones.
+     * Solo para Admin/SuperAdmin.
      */
     public function actionCancelar($id)
     {
         $torneo = $this->findModel($id);
 
+        // Seguridad: Si ya está cancelado o terminado, no hacemos nada
         if ($torneo->estado === 'Cancelado' || $torneo->estado === 'Finalizado') {
-            return $this->redirect(['index']);
+            Yii::$app->session->setFlash('warning', 'Este torneo ya estaba cerrado.');
+            return $this->redirect(['view', 'id' => $id]);
         }
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
+            // 1. Cambiar estado a Cancelado
             $torneo->estado = 'Cancelado';
-            $torneo->save();
+            if (!$torneo->save()) throw new \Exception("Error al guardar estado del torneo.");
 
-            foreach ($torneo->participaciones as $participacion) {
-                $monedero = Monedero::findOne(['id_usuario' => $participacion->id_usuario]);
-                if ($monedero) {
+            // 2. Devolver dinero a los participantes
+            $participantes = \app\models\ParticipacionTorneo::find()->where(['id_torneo' => $id])->all();
+            $contadorReembolsos = 0;
+
+            foreach ($participantes as $participacion) {
+                $monedero = \app\models\Monedero::findOne(['id_usuario' => $participacion->id_usuario]);
+                
+                if ($monedero && $torneo->coste_entrada > 0) {
+                    // A. Devolvemos el saldo
                     $monedero->saldo_real += $torneo->coste_entrada;
                     $monedero->save();
+
+                    // B. Creamos registro de transacción (IMPORTANTE para el historial)
+                    $trans = new \app\models\Transaccion();
+                    $trans->id_usuario = $participacion->id_usuario;
+                    $trans->tipo_operacion = 'Premio'; // O 'Deposito', usamos Premio para que sume positivo
+                    $trans->categoria = 'Torneo';
+                    $trans->cantidad = $torneo->coste_entrada;
+                    $trans->metodo_pago = 'Sistema';
+                    $trans->estado = 'Completado';
+                    $trans->referencia_externa = "Reembolso cancelación: " . $torneo->titulo;
+                    $trans->save();
                     
-                    // Aquí podrías crear log de transacción
+                    $contadorReembolsos++;
                 }
             }
 
             $transaction->commit();
-            Yii::$app->session->setFlash('success', 'Torneo cancelado y dinero devuelto.');
+            Yii::$app->session->setFlash('success', "Torneo cancelado. Se ha reembolsado la entrada a $contadorReembolsos jugadores.");
 
         } catch (\Exception $e) {
             $transaction->rollBack();
+            Yii::$app->session->setFlash('error', 'Error al cancelar: ' . $e->getMessage());
         }
 
-        return $this->redirect(['index']);
+        return $this->redirect(['view', 'id' => $id]);
     }
 
     public function actionDelete($id)
