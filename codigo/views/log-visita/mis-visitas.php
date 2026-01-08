@@ -36,20 +36,20 @@ $this->title = 'Mis Accesos y Seguridad';
                         'contentOptions' => ['style' => 'text-align: center; width: 80px;'],
                     ],
 
-                    // Columna 2: Fecha (CORRECTO)
+                    // Columna 2: Fecha
                     [
                         'attribute' => 'fecha_hora',
                         'label' => 'Fecha',
                         'format' => ['date', 'php:d/m/Y H:i:s'],
                     ],
 
-                    // Columna 3: IP (CORREGIDO: direccion_ip)
+                    // Columna 3: IP
                     [
-                        'attribute' => 'direccion_ip', // <--- AQUÍ ESTABA EL ERROR
+                        'attribute' => 'direccion_ip', 
                         'label' => 'IP',
                     ],
 
-                    // Columna 4: Botón Ver Detalles (Lo que íbamos a añadir hoy)
+                    // Columna 4: Botón Ver Detalles
                     [
                         'class' => 'yii\grid\ActionColumn',
                         'template' => '{view}',

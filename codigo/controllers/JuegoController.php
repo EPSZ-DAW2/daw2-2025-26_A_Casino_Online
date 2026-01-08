@@ -74,10 +74,10 @@ class JuegoController extends Controller
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
 
-                // 1. Instanciar la imagen
+                // Instanciar la imagen
                 $model->archivoImagen = UploadedFile::getInstance($model, 'archivoImagen');
 
-                // 2. IMPORTANTE: Validamos el modelo AQUÍ, mientras la imagen sigue en la carpeta temporal
+                // IMPORTANTE: Validamos el modelo AQUÍ, mientras la imagen sigue en la carpeta temporal
                 if ($model->validate()) {
 
                     // Si la validación pasa, procedemos a mover el archivo
@@ -91,7 +91,7 @@ class JuegoController extends Controller
                         }
                     }
 
-                    // 3. Guardamos en BD poniendo 'false' para que NO valide de nuevo (evita el error de archivo no encontrado)
+                    // Guardamos en BD poniendo 'false' para que NO valide de nuevo (evita el error de archivo no encontrado)
                     $model->save(false);
 
                     return $this->redirect(['view', 'id' => $model->id]);
@@ -161,12 +161,12 @@ class JuegoController extends Controller
      */
     public function actionLobby()
     {
-        // 1. Buscamos solo los juegos que estén marcados como 'activo'
+        // Buscamos solo los juegos que estén marcados como 'activo'
         $juegos = Juego::find()
             ->where(['activo' => 1])
             ->all();
 
-        // 2. Renderizamos la vista 'lobby' (que crearemos ahora)
+        // Renderizamos la vista 'lobby' (que crearemos ahora)
         return $this->render('lobby', [
             'juegos' => $juegos,
         ]);
@@ -235,7 +235,7 @@ class JuegoController extends Controller
             $simbolos[array_rand($simbolos)]  // Rodillo 3
         ];
 
-        // 5. Comprobar si ha ganado
+        // Comprobar si ha ganado
         $ganancia = 0;
         $esVictoria = false;
 
@@ -278,7 +278,7 @@ class JuegoController extends Controller
         $trans->estado = 'Completado';
         $trans->save();
 
-        // 7. Devolvemos el resultado al juego (JS)
+        // Devolvemos el resultado al juego (JS)
         return [
             'success' => true,
             'rodillos' => $resultado, // Ej: ['🍒', '💎', '🍒']
@@ -371,7 +371,7 @@ class JuegoController extends Controller
                 break;
         }
 
-        // 6. Pagar y Guardar
+        // Pagar y Guardar
         if ($esVictoria) {
             $monedero->saldo_real += $ganancia;
         }
@@ -385,7 +385,7 @@ class JuegoController extends Controller
         $trans->estado = 'Completado';
         $trans->save();
 
-        // 7. Devolver resultado (añadimos la cantidad para feedback visual)
+        // Devolver resultado (añadimos la cantidad para feedback visual)
         return [
             'success' => true,
             'numero' => $numeroGanador,

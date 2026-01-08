@@ -150,17 +150,17 @@ class AlertaFraudeController extends Controller
      */
     public function actionBanear($id)
     {
-        // 1. Buscamos la alerta seleccionada
+        // Buscamos la alerta seleccionada
         $alerta = $this->findModel($id);
 
-        // 2. Buscamos al usuario asociado a esa alerta
+        // Buscamos al usuario asociado a esa alerta
         $usuario = \app\models\Usuario::findOne($alerta->id_usuario);
 
         if ($usuario) {
-            // 3. ¡ZAS! Cambiamos su estado a Bloqueado
+            // Cambiamos su estado a Bloqueado
             $usuario->estado_cuenta = 'Bloqueado';
 
-            // 4. Guardamos los cambios
+            // Guardamos los cambios
             if ($usuario->save(false)) { // false para saltar validaciones estrictas
                 Yii::$app->session->setFlash('success', '🚫 El usuario ' . $usuario->nick . ' ha sido BANEADO correctamente.');
 
@@ -174,7 +174,7 @@ class AlertaFraudeController extends Controller
             Yii::$app->session->setFlash('error', 'Error: Esta alerta no tiene un usuario válido asociado.');
         }
 
-        // 5. Volvemos a la lista
+        // Volvemos a la lista
         return $this->redirect(['index']);
     }
 }

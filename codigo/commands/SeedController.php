@@ -20,7 +20,7 @@ class SeedController extends Controller
     {
         echo "Inicializando datos de prueba...\n";
 
-        // 1. Crear Usuario Admin
+        // Crear Usuario Admin
         $admin = Usuario::findOne(['nick' => 'admin']);
         if (!$admin) {
             $admin = new Usuario();
@@ -45,7 +45,7 @@ class SeedController extends Controller
             echo " [SKIP] El usuario 'admin' ya existe.\n";
         }
 
-        // 2. Crear Jugador de prueba
+        // Crear Jugador de prueba
         $jugador = Usuario::findOne(['nick' => 'jugador1']);
         if (!$jugador) {
             $jugador = new Usuario();

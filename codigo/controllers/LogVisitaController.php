@@ -144,12 +144,12 @@ class LogVisitaController extends Controller
     }
     public function actionMisVisitas()
     {
-        // 1. Verificamos que el usuario esté logueado (importante por seguridad)
+        // Verificamos que el usuario esté logueado (importante por seguridad)
         if (Yii::$app->user->isGuest) {
             return $this->redirect(['site/login']);
         }
 
-        // 2. Buscamos SOLO las visitas del usuario actual
+        // Buscamos SOLO las visitas del usuario actual
         $searchModel = new \app\models\LogVisitaSearch();
 
         // Forzamos que el filtro busque por el ID del usuario conectado
@@ -159,7 +159,7 @@ class LogVisitaController extends Controller
         // Ordenamos para ver las más recientes primero
         $dataProvider->setSort(['defaultOrder' => ['fecha_hora' => SORT_DESC]]);
 
-        // 3. Renderizamos una vista especial para el usuario (no la de admin)
+        // Renderizamos una vista especial para el usuario (no la de admin)
         return $this->render('mis-visitas', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
