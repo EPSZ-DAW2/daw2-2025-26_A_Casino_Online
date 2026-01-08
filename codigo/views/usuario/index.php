@@ -51,49 +51,65 @@ $this->params['breadcrumbs'][] = $this->title;
             //'notas_internas:ntext',
             //'codigo_referido_propio',
             //'id_padrino',
-            
+    
             // Columna Rol con filtro
             [
                 'attribute' => 'rol',
                 'filter' => ['jugador' => 'Jugador', 'admin' => 'Admin'],
                 'value' => function ($model) {
-                    return ucfirst($model->rol);
-                },
+                        return ucfirst($model->rol);
+                    },
             ],
 
             // Columna VIP (Requisito G1)
             [
                 'attribute' => 'nivel_vip',
-                'filter' => ['Bronce'=>'Bronce', 'Plata'=>'Plata', 'Oro'=>'Oro'],
+                'filter' => ['Bronce' => 'Bronce', 'Plata' => 'Plata', 'Oro' => 'Oro'],
                 'contentOptions' => function ($model) {
-                    // Ponemos colores según el nivel VIP
-                    if ($model->nivel_vip == 'Oro') return ['style' => 'background-color:#FFF8DC; font-weight:bold; color:#B8860B'];
-                    if ($model->nivel_vip == 'Plata') return ['style' => 'background-color:#F0F8FF; font-weight:bold; color:#708090'];
-                    return [];
-                },
+                        // Ponemos colores según el nivel VIP
+                        if ($model->nivel_vip == 'Oro')
+                            return ['style' => 'background-color:#FFF8DC; font-weight:bold; color:#B8860B'];
+                        if ($model->nivel_vip == 'Plata')
+                            return ['style' => 'background-color:#F0F8FF; font-weight:bold; color:#708090'];
+                        return [];
+                    },
             ],
 
             // Estado de la cuenta (Para ver baneados rápidamente)
             [
                 'attribute' => 'estado_cuenta',
-                'filter' => ['Activo'=>'Activo', 'Bloqueado'=>'Bloqueado'],
+                'filter' => ['Activo' => 'Activo', 'Bloqueado' => 'Bloqueado'],
                 'contentOptions' => function ($model) {
-                    return $model->estado_cuenta == 'Bloqueado' ? ['class' => 'bg-danger text-white'] : [];
-                },
+                        return $model->estado_cuenta == 'Bloqueado' ? ['class' => 'bg-danger text-white'] : [];
+                    },
             ],
 
             // Verificación (KYC)
             [
                 'attribute' => 'estado_verificacion',
-                'filter' => ['Pendiente'=>'Pendiente', 'Verificado'=>'Verificado', 'Rechazado'=>'Rechazado'],
+                'filter' => ['Pendiente' => 'Pendiente', 'Verificado' => 'Verificado', 'Rechazado' => 'Rechazado'],
             ],
 
             // Botones de acción
             [
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Usuario $model, $key, $index, $column) {
-                    return Url::toRoute([$action, 'id' => $model->id]);
-                 }
+                        return Url::toRoute([$action, 'id' => $model->id]);
+                    },
+                'template' => '{view} {update} {delete} {bloquear}', // Añadimos botón bloquear
+                'buttons' => [
+                    'bloquear' => function ($url, $model, $key) {
+                            return Html::a(
+                                '⛔',
+                                ['alerta-fraude/create', 'user_id' => $model->id],
+                                [
+                                    'class' => 'btn btn-danger btn-sm',
+                                    'title' => 'Bloquear / Reportar Fraude',
+                                    'data-pjax' => '0',
+                                ]
+                            );
+                        },
+                ],
             ],
         ],
     ]); ?>

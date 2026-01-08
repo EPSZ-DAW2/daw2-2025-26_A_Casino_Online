@@ -35,7 +35,7 @@ class AlertaFraudeController extends Controller
                 ],
             ],
             'verbs' => [
-                'class' => \yii\filters\VerbFilter::class,
+                'class' => VerbFilter::class,
                 'actions' => [
                     'delete' => ['POST'],
                     'banear' => ['POST'], // Protegemos el ban también
@@ -78,9 +78,14 @@ class AlertaFraudeController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
      */
-    public function actionCreate()
+    public function actionCreate($user_id = null)
     {
         $model = new AlertaFraude();
+
+        // Si venimos desde el botón "Bloquear" del usuario, pre-rellenamos el ID
+        if ($user_id) {
+            $model->id_usuario = $user_id;
+        }
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
@@ -157,18 +162,25 @@ class AlertaFraudeController extends Controller
         $usuario = \app\models\Usuario::findOne($alerta->id_usuario);
 
         if ($usuario) {
-            // Cambiamos su estado a Bloqueado
-            $usuario->estado_cuenta = 'Bloqueado';
+
+            if ($usuario->estado_cuenta === 'Bloqueado') {
+                // DESBANEAR
+                $usuario->estado_cuenta = 'Activo';
+                $msg = '✅ El usuario ' . $usuario->nick . ' ha sido DESBANEADO y reactivado.';
+                $alerta->estado = 'Revisión'; // Lo devolvemos a revisión o resuelto?
+            } else {
+                // BANEAR
+                $usuario->estado_cuenta = 'Bloqueado';
+                $msg = '🚫 El usuario ' . $usuario->nick . ' ha sido BANEADO correctamente.';
+                $alerta->estado = 'Resuelto';
+            }
 
             // Guardamos los cambios
             if ($usuario->save(false)) { // false para saltar validaciones estrictas
-                Yii::$app->session->setFlash('success', '🚫 El usuario ' . $usuario->nick . ' ha sido BANEADO correctamente.');
-
-                // Opcional: Marcar la alerta como "Resuelta" automáticamente
-                $alerta->estado = 'Resuelto';
+                Yii::$app->session->setFlash('success', $msg);
                 $alerta->save(false);
             } else {
-                Yii::$app->session->setFlash('error', 'No se pudo banear al usuario.');
+                Yii::$app->session->setFlash('error', 'No se pudo cambiar el estado del usuario.');
             }
         } else {
             Yii::$app->session->setFlash('error', 'Error: Esta alerta no tiene un usuario válido asociado.');

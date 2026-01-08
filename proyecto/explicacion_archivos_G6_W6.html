@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicación Archivos G6 y W6</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #16a085;
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: Consolas, monospace;
+            color: #e74c3c;
+        }
+
+        strong {
+            color: #2c3e50;
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #ddd;
+            margin: 30px 0;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Explicación de Archivos - Módulos G6 y W6 (Social y Gamificación)</h1>
+
+        <p>Este documento detalla los archivos creados y modificados para la implementación de los módulos <strong>G6
+                (Social: Chat y Mesas Privadas)</strong> y <strong>W6 (Gamificación y Sistema de Afiliados)</strong>.
+        </p>
+
+        <hr>
+
+        <h2>1. Controladores (Controllers)</h2>
+        <p>Los controladores manejan la lógica de negocio y conectan los modelos con las vistas.</p>
+
+        <h3><code>codigo/controllers/AfiliadoController.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Gestiona el <strong>Sistema de Afiliados</strong>.</li>
+            <li><strong>Funcionalidad Principal</strong>:
+                <ul>
+                    <li>Genera y guarda el código de referido único para el usuario si no lo tiene.</li>
+                    <li>Muestra el panel (<code>dashboard</code>) con el enlace para compartir.</li>
+                    <li>Calcula las comisiones basadas en los usuarios captados ("ahijados") que se han verificado.</li>
+                </ul>
+            </li>
+            <li><strong>Actions</strong>: <code>actionIndex</code>.</li>
+        </ul>
+
+        <h3><code>codigo/controllers/GamificacionController.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Controlador para la parte visual de la <strong>Gamificación</strong>
+                (Frontend del usuario).</li>
+            <li><strong>Funcionalidad Principal</strong>:
+                <ul>
+                    <li>Muestra el "Muro de Logros" del usuario.</li>
+                    <li>Recupera los logros desbloqueados mediante la relación en el modelo <code>Usuario</code>.</li>
+                </ul>
+            </li>
+            <li><strong>Actions</strong>: <code>actionIndex</code>.</li>
+        </ul>
+
+        <h3><code>codigo/controllers/MesaPrivadaController.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Gestiona las <strong>Mesas Privadas</strong> y el <strong>Chat</strong>
+                asociado.</li>
+            <li><strong>Funcionalidad Principal</strong>:
+                <ul>
+                    <li><strong>CRUD de Mesas</strong>: Permite crear (<code>create</code>), listar (<code>index</code>)
+                        y borrar mesas.</li>
+                    <li><strong>Seguridad</strong>: Gestiona el acceso mediante contraseña (<code>actionJoin</code>) y
+                        sesiones.</li>
+                    <li><strong>Sala de Juego (<code>actionRoom</code>)</strong>: Integra la vista del juego (vía Iframe
+                        G3/G4) junto con el chat en tiempo real.</li>
+                    <li><strong>Chat</strong>: Procesa el envío y lectura de mensajes (<code>MensajeChat</code>).</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3><code>codigo/controllers/LogroController.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Gestión administrativa (Back-office) de los <strong>Logros</strong>.</li>
+            <li><strong>Funcionalidad Principal</strong>:
+                <ul>
+                    <li>Permite a los Administradores crear, editar y eliminar los logros disponibles en el sistema.
+                    </li>
+                    <li>Restringido solo a roles <code>admin</code> y <code>superadmin</code>.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <hr>
+
+        <h2>2. Modelos (Models)</h2>
+        <p>Representan la estructura de datos y la lógica de negocio.</p>
+
+        <h3><code>codigo/models/Usuario.php</code> (Modificado)</h3>
+        <ul>
+            <li><strong>Descripción</strong>: Modelo central del usuario.</li>
+            <li><strong>Cambios G6/W6</strong>:
+                <ul>
+                    <li><strong>Relación <code>getAfiliados()</code></strong>: Define la relación "uno a muchos" para
+                        obtener los usuarios captados (<code>id_padrino</code>).</li>
+                    <li><strong>Relación <code>getLogros()</code></strong>: Define la relación "muchos a muchos" con
+                        <code>Logro</code> para obtener las medallas ganadas.</li>
+                    <li><strong>Atributos</strong>: <code>codigo_referido_propio</code>, <code>id_padrino</code>.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3><code>codigo/models/MesaPrivada.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Representa una mesa de juego privada creada por un usuario.</li>
+            <li><strong>Atributos</strong>: <code>nombre</code>, <code>tipo_juego</code>, <code>password_hash</code>
+                (contraseña de la sala), <code>id_anfitrion</code>, <code>estado_mesa</code>.</li>
+            <li><strong>Métodos</strong>: <code>validarContrasena($password)</code> para el acceso seguro.</li>
+        </ul>
+
+        <h3><code>codigo/models/MensajeChat.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Representa un mensaje individual enviado en una mesa.</li>
+            <li><strong>Atributos</strong>: <code>mensaje</code>, <code>fecha_envio</code>, <code>id_usuario</code>,
+                <code>id_mesa</code>.</li>
+            <li><strong>Lógica</strong>: Validación de longitud y limpieza de texto.</li>
+        </ul>
+
+        <h3><code>codigo/models/Logro.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Define qué es un logro (Medalla).</li>
+            <li><strong>Atributos</strong>: <code>titulo</code>, <code>descripcion</code>, <code>icono_url</code>,
+                <code>puntos_otorgados</code>.</li>
+        </ul>
+
+        <h3><code>codigo/models/LogroUsuario.php</code></h3>
+        <ul>
+            <li><strong>Descripción</strong>: Tabla intermedia (Pivote) que registra qué usuario tiene qué logro y
+                cuándo lo obtuvo.</li>
+            <li><strong>Atributos</strong>: <code>id_usuario</code>, <code>id_logro</code>,
+                <code>fecha_obtencion</code>.</li>
+        </ul>
+
+        <hr>
+
+        <h2>3. Vistas (Views)</h2>
+        <p>Archivos que renderizan la interfaz de usuario.</p>
+
+        <h3><code>codigo/views/afiliado/panel.php</code></h3>
+        <ul>
+            <li><strong>Uso</strong>: Interfaz del panel de afiliados.</li>
+            <li><strong>Contenido</strong>: Muestra el código de referido, botón para copiar enlace, tabla con lista de
+                afiliados y el total de comisiones generadas.</li>
+        </ul>
+
+        <h3><code>codigo/views/gamificacion/index.php</code></h3>
+        <ul>
+            <li><strong>Uso</strong>: Muro de Logros.</li>
+            <li><strong>Contenido</strong>: Diseño visual (Grid/Tarjetas) que muestra las medallas desbloqueadas por el
+                usuario, con sus iconos y descripciones.</li>
+        </ul>
+
+        <h3><code>codigo/views/mesa-privada/</code></h3>
+        <ul>
+            <li><strong><code>index.php</code></strong>: Listado ("Lobby") de mesas privadas activas donde los usuarios
+                pueden elegir entrar.</li>
+            <li><strong><code>create.php</code></strong>: Formulario para configurar una nueva mesa (Nombre, Juego,
+                Contraseña).</li>
+            <li><strong><code>join.php</code></strong>: Pantalla intermedia que solicita la contraseña para entrar a una
+                mesa protegida.</li>
+            <li><strong><code>room.php</code></strong>: <strong>Vista Principal Integradora</strong>. Divide la pantalla
+                en:
+                <ul>
+                    <li><strong>Zona de Juego</strong>: Iframe que carga el juego (Ruleta, Blackjack, etc.).</li>
+                    <li><strong>Zona de Chat</strong>: Historial de mensajes y caja de texto para chatear con otros
+                        jugadores.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3><code>codigo/views/logro/</code></h3>
+        <ul>
+            <li><strong><code>index.php</code>, <code>view.php</code>, <code>create.php</code>,
+                    <code>update.php</code></strong>: Vistas estándar para que el administrador gestione el catálogo de
+                logros.</li>
+        </ul>
+    </div>
+</body>
+
+</html>
