@@ -146,7 +146,7 @@ $esCartas = ($model->tipo === 'Cartas');
             $('#' + divId).html(html);
         }
 
-        // 1. INICIAR
+        // INICIAR
         function iniciarBJ() {
             let apuesta = $('#apuesta-bj').val();
             
@@ -169,7 +169,7 @@ $esCartas = ($model->tipo === 'Cartas');
             });
         }
 
-        // 2. PEDIR CARTA
+        // PEDIR CARTA
         function pedirCarta() {
             $.post('<?= Url::to(['juego/api-blackjack-pedir']) ?>', 
                 { _csrf: '<?= Yii::$app->request->getCsrfToken() ?>' }, 
@@ -187,7 +187,7 @@ $esCartas = ($model->tipo === 'Cartas');
             });
         }
 
-        // 3. PLANTARSE
+        // PLANTARSE
         function plantarse() {
             $.post('<?= Url::to(['juego/api-blackjack-plantarse']) ?>', 
                 { _csrf: '<?= Yii::$app->request->getCsrfToken() ?>' }, 

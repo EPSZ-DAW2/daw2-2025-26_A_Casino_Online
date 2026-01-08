@@ -322,15 +322,15 @@ class Usuario extends ActiveRecord implements IdentityInterface
      */
     public function puedeJugar()
     {
-        // 1. Si está bloqueado, nadie juega
+        // Si está bloqueado, nadie juega
         if ($this->estado_cuenta !== 'Activo')
             return false;
 
-        // 2. Si no verificado, nadie juega
+        // Si no verificado, nadie juega
         if ($this->estado_verificacion !== 'Verificado')
             return false;
 
-        // 3. Empleados no juegan, pero SuperAdmin y Jugador sí
+        // Empleados no juegan, pero SuperAdmin y Jugador sí
         if ($this->rol === self::ROL_JUGADOR || $this->esSuperAdmin()) {
             return true;
         }

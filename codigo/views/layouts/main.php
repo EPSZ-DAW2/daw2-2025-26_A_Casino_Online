@@ -53,10 +53,10 @@ $identity = Yii::$app->user->identity;
         // --- MENÚS DE GESTIÓN (VISIBILIDAD POR ROLES) ---
         if (!Yii::$app->user->isGuest) {
 
-            // 1. SEGURIDAD (Para todos los usuarios logueados - Tu parte pública)
+            // SEGURIDAD (Para todos los usuarios logueados)
             $menuItems[] = ['label' => '🛡️ Mi Seguridad', 'url' => ['/log-visita/mis-visitas']];
 
-            // 2. GESTIÓN DE USUARIOS Y FRAUDE (G1 / G5)
+            // GESTIÓN DE USUARIOS Y FRAUDE (G1 / G5)
             // Permiso: SuperAdmin o Admin
             if ($identity->puedeGestionarUsuarios()) {
 
@@ -76,7 +76,6 @@ $identity = Yii::$app->user->identity;
                 } catch (\Exception $e) {
                     // Si falla la base de datos, no hacemos nada
                 }
-                // --- FIN LÓGICA ---
         
                 // Botón del Grupo 5 (Fraude + Bolita Roja)
                 $menuItems[] = [
@@ -86,7 +85,7 @@ $identity = Yii::$app->user->identity;
                 ];
             }
 
-            // 3. GESTIÓN FINANCIERA (G2)
+            // GESTIÓN FINANCIERA (G2)
             if ($identity->puedeGestionarDinero()) {
                 $menuItems[] = ['label' => '💰 PAGOS', 'url' => ['/transaccion/index'], 'linkOptions' => ['class' => 'text-info fw-bold']];
             }
