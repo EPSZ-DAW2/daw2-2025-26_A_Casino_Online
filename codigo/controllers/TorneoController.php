@@ -62,8 +62,20 @@ class TorneoController extends Controller
      */
     public function actionIndex()
     {
+        // --- AUTO-CIERRE DE TORNEOS ---
+        // Buscamos todos los torneos que sigan "En Curso"
+        $torneosEnCurso = \app\models\Torneo::find()
+            ->where(['estado' => 'En Curso'])
+            ->all();
+
+        foreach ($torneosEnCurso as $torneo) {
+            // Cada torneo comprueba su fecha y se cierra si toca
+            $torneo->comprobarFinalizacionAutomatica();
+        }
+        // ------------------------------
+
         $searchModel = new TorneoSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
