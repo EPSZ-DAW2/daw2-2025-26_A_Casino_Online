@@ -75,34 +75,60 @@ class TorneoController extends Controller
      * Acción para entrar a la sala de juego.
      * Redirige al controlador del Juego (Módulo G2/G3).
      */
-    public function actionJugar($id)
+    public function actionJugar($id, $id_torneo = null) 
     {
-        // 1. Bypass de usuario (El truco que estamos usando)
-        $usuarioId = 2; 
+        $model = $this->findModel($id);
 
-        // 2. Buscar torneo
-        $torneo = $this->findModel($id);
-
-        // 3. Comprobar si el usuario REALMENTE está inscrito
-        $estaInscrito = ParticipacionTorneo::find()
-            ->where(['id_torneo' => $id, 'id_usuario' => $usuarioId])
-            ->exists();
-
-        if (!$estaInscrito) {
-            // Si intenta jugar sin pagar, lo mandamos a inscribirse
-            Yii::$app->session->setFlash('warning', 'Primero debes pagar la inscripción.');
-            return $this->redirect(['unirse', 'id' => $id]);
+        // --- SEGURIDAD: SI ESTÁ EN MANTENIMIENTO O DESACTIVADO, EXPULSAR ---
+        if ($model->en_mantenimiento == 1 || $model->activo == 0) {
+            Yii::$app->session->setFlash('error', 'El juego "' . $model->nombre . '" está en mantenimiento.');
+            return $this->redirect(['lobby']);
         }
 
-        // 4. LÓGICA DE REDIRECCIÓN AL JUEGO (Aquí conectamos con G2)
-        // Asumimos que el controlador de juegos se llama 'JuegoController' y la acción 'play'
-        // Pasamos el ID del juego Y el ID del torneo para que sepan que es competición.
+        // --- MODO TORNEO ---
+        if ($id_torneo !== null) {
+            // Verificar estado del torneo
+            $torneo = \app\models\Torneo::findOne($id_torneo);
+            
+            if (!$torneo) {
+                return $this->redirect(['lobby']);
+            }
+
+            // CORRECCIÓN IMPORTANTE: Si es un torneo, SOLO dejamos jugar si está "En Curso"
+            if ($torneo->estado === 'Abierto') {
+                Yii::$app->session->setFlash('warning', '⏳ Este torneo está en fase de PRE-INSCRIPCIÓN. Espera a que comience para jugar.');
+                return $this->redirect(['/torneo/view', 'id' => $id_torneo]);
+            }
+
+            if ($torneo->estado === 'Finalizado' || $torneo->estado === 'Cancelado') {
+                Yii::$app->session->setFlash('error', 'Este torneo ha finalizado.');
+                return $this->redirect(['/torneo/view', 'id' => $id_torneo]);
+            }
+
+            // Si está "En Curso", dejamos pasar y renderizamos la vista de juego
+            $this->layout = false;
+            return $this->render('jugar', [
+                'model' => $model,
+                'saldo' => 0, 
+                'es_torneo' => true,
+                'id_torneo' => $id_torneo
+            ]);
+        }
+
+        // --- MODO NORMAL (JUGAR POR DINERO) ---
+        if (Yii::$app->user->isGuest) {
+             // ... lógica de invitado ...
+             $saldo = 0;
+        } else {
+            $saldo = Yii::$app->user->identity->monedero ? Yii::$app->user->identity->monedero->saldo_real : 0;
+        }
         
-        // En TorneoController.php -> actionJugar($id)
-        return $this->redirect([
-            'juego/jugar', // <--- CAMBIO AQUÍ (Antes era 'play')
-            'id' => $torneo->id_juego_asociado, // El ID del juego (Slots, Ruleta...)
-            'id_torneo' => $torneo->id // Le pasamos el ID del torneo
+        $this->layout = false; 
+        return $this->render('jugar', [
+            'model' => $model,
+            'saldo' => $saldo,
+            'es_torneo' => false,
+            'id_torneo' => null
         ]);
     }
 
@@ -125,14 +151,15 @@ class TorneoController extends Controller
         ]);
     }
 
-    public function actionUnirse($id)
+public function actionUnirse($id)
 {
     $torneo = $this->findModel($id);
     $usuario = Yii::$app->user->identity;
-    $monedero = $usuario->monedero; // Asegúrate de tener la relación en el modelo Usuario
+    $monedero = $usuario->monedero;
 
-    // 1. Validaciones básicas
-    if ($torneo->estado !== 'Abierto') {
+    // --- AQUÍ ESTÁ LA CLAVE ---
+    // Si tras el merge esta línea pone solo 'Abierto', cámbiala por esta:
+    if ($torneo->estado !== 'Abierto' && $torneo->estado !== 'En Curso') {
         Yii::$app->session->setFlash('error', 'Este torneo no admite inscripciones ahora.');
         return $this->redirect(['view', 'id' => $id]);
     }
@@ -144,11 +171,15 @@ class TorneoController extends Controller
 
     if ($yaInscrito) {
         Yii::$app->session->setFlash('warning', '¡Ya estás inscrito en este torneo!');
+        
+        // Si ya está inscrito y el torneo está en curso, lo mandamos a jugar directamente
+        if ($torneo->estado === 'En Curso') {
+            return $this->redirect(['/juego/jugar', 'id' => $torneo->id_juego_asociado, 'id_torneo' => $torneo->id]);
+        }
         return $this->redirect(['view', 'id' => $id]);
     }
 
-    // 3. VALIDACIÓN DE FONDOS (Aquí estaba el problema)
-    // Convertimos todo a float para evitar errores de texto vs número
+    // 3. Validación de fondos
     $saldo = (float) $monedero->saldo_real;
     $coste = (float) $torneo->coste_entrada;
 
@@ -157,24 +188,24 @@ class TorneoController extends Controller
         return $this->redirect(['view', 'id' => $id]);
     }
 
-    // 4. TRANSACCIÓN: Cobrar y Unir
+    // 4. Transacción: Cobrar y Crear Participación
     $transaction = Yii::$app->db->beginTransaction();
     try {
-        // A. Restar Saldo
+        // A. Restar dinero
         $monedero->saldo_real -= $coste;
         if (!$monedero->save()) throw new \Exception("Error al actualizar monedero.");
 
-        // B. Crear Participación (Puntuación inicial 0)
+        // B. Crear participación
         $participacion = new \app\models\ParticipacionTorneo();
         $participacion->id_torneo = $id;
         $participacion->id_usuario = $usuario->id;
-        $participacion->puntuacion_actual = 0; // Empieza con 0 ganancias
+        $participacion->puntuacion_actual = 0;
         if (!$participacion->save()) throw new \Exception("Error al crear participación.");
 
-        // C. Crear Transacción (Historial)
+        // C. Crear registro de transacción
         $trans = new \app\models\Transaccion();
         $trans->id_usuario = $usuario->id;
-        $trans->tipo_operacion = 'Apuesta'; // O 'Entrada Torneo'
+        $trans->tipo_operacion = 'Apuesta'; 
         $trans->cantidad = $coste;
         $trans->metodo_pago = 'Monedero';
         $trans->estado = 'Completado';
@@ -182,14 +213,23 @@ class TorneoController extends Controller
         $trans->save();
 
         $transaction->commit();
-        Yii::$app->session->setFlash('success', '¡Inscripción realizada con éxito! ¡A jugar!');
-        return $this->redirect(['/juego/jugar', 'id' => $torneo->id_juego_asociado, 'id_torneo' => $torneo->id]);
+
+        // --- REDIRECCIÓN INTELIGENTE ---
+        if ($torneo->estado === 'En Curso') {
+            Yii::$app->session->setFlash('success', '¡Inscripción completada! El torneo está EN VIVO. ¡Mucha suerte!');
+            // Si está en vivo, vamos directo al juego
+            return $this->redirect(['/juego/jugar', 'id' => $torneo->id_juego_asociado, 'id_torneo' => $torneo->id]);
+        } else {
+            Yii::$app->session->setFlash('success', '¡Pre-inscripción realizada! Tu plaza está reservada. Espera a que empiece.');
+            // Si está solo abierto, nos quedamos en la ficha
+            return $this->redirect(['view', 'id' => $id]);
+        }
+
     } catch (\Exception $e) {
         $transaction->rollBack();
         Yii::$app->session->setFlash('error', 'Ocurrió un error técnico: ' . $e->getMessage());
+        return $this->redirect(['view', 'id' => $id]);
     }
-
-    return $this->redirect(['view', 'id' => $id]);
 }
 
     public function actionFinalizar($id)

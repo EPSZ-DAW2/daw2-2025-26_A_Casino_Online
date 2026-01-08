@@ -73,18 +73,18 @@ class JuegoController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
-                
+
                 // 1. Instanciar la imagen
                 $model->archivoImagen = UploadedFile::getInstance($model, 'archivoImagen');
 
                 // 2. IMPORTANTE: Validamos el modelo AQUÍ, mientras la imagen sigue en la carpeta temporal
                 if ($model->validate()) {
-                    
+
                     // Si la validación pasa, procedemos a mover el archivo
                     if ($model->archivoImagen) {
                         $nombreArchivo = 'juego_' . time() . '_' . $model->archivoImagen->baseName . '.' . $model->archivoImagen->extension;
                         $rutaCarpeta = Yii::getAlias('@webroot') . '/uploads/';
-                        
+
                         // Guardamos el archivo físico
                         if ($model->archivoImagen->saveAs($rutaCarpeta . $nombreArchivo)) {
                             $model->url_caratula = 'uploads/' . $nombreArchivo;
@@ -92,8 +92,8 @@ class JuegoController extends Controller
                     }
 
                     // 3. Guardamos en BD poniendo 'false' para que NO valide de nuevo (evita el error de archivo no encontrado)
-                    $model->save(false); 
-                    
+                    $model->save(false);
+
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
             }
@@ -182,10 +182,10 @@ class JuegoController extends Controller
 
         // --- SEGURIDAD: SI ESTÁ EN MANTENIMIENTO O DESACTIVADO, EXPULSAR ---
         if ($model->en_mantenimiento == 1 || $model->activo == 0) {
+
             Yii::$app->session->setFlash('error', 'El juego "' . $model->nombre . '" está en mantenimiento.');
             return $this->redirect(['lobby']);
         }
-
         // --- MODO TORNEO ---
         if ($id_torneo !== null) {
             // Si venimos de un torneo, NO comprobamos saldo real, porque ya pagó la entrada.
@@ -200,18 +200,13 @@ class JuegoController extends Controller
                 'id_torneo' => $id_torneo
             ]);
         }
-
-        // --- MODO NORMAL (JUGAR POR DINERO) ---
-        
-        // PARCHE DE SEGURIDAD (Login Bypass)
-        // Si el login no va, inventamos un saldo para que no explote
-        if (Yii::$app->user->isGuest) {
-            $saldo = 1000.00; // Saldo falso para probar
-        } else {
+        if (Yii::$app->user->identity->monedero) {
             $saldo = Yii::$app->user->identity->monedero->saldo_real;
+        } else {
+            $saldo = 0.00; // Si no tiene monedero, saldo 0 para que no rompa
         }
-        
-        $this->layout = false; 
+
+        $this->layout = false;
         return $this->render('jugar', [
             'model' => $model,
             'saldo' => $saldo,
@@ -258,28 +253,28 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
     public function actionApiGirarSlot($id)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
+
         // Cargamos el Juego y el Usuario
         $juego = $this->findModel($id);
         $usuario = Yii::$app->user->identity;
-        $monedero = $usuario->monedero; 
+        $monedero = $usuario->monedero;
 
         // Coste de la tirada, 
-        $costeTirada = 1.00; 
+        $costeTirada = 1.00;
 
         // Validaciones de Seguridad
         if (!$monedero || $monedero->saldo_real < $costeTirada) {
             return ['success' => false, 'mensaje' => 'Saldo insuficiente. Recarga tu cuenta.'];
         }
-        
+
         // Cobramos la entrada
         $monedero->saldo_real -= $costeTirada;
-        
+
         // LÓGICA DEL JUEGO 
         // Definimos los símbolos posibles
-        $simbolos = ['🍒', '🍋', '🍇', '💎', '🔔']; 
+        $simbolos = ['🍒', '🍋', '🍇', '💎', '🔔'];
         //Todos tienen la misma probabilidad ahora mismo
-        
+
         $resultado = [
             $simbolos[array_rand($simbolos)], // Rodillo 1
             $simbolos[array_rand($simbolos)], // Rodillo 2
@@ -293,12 +288,18 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
         // Regla: Si los 3 símbolos son iguales
         if ($resultado[0] === $resultado[1] && $resultado[1] === $resultado[2]) {
             $esVictoria = true;
-            
+
             // Tabla de Pagos simple
             switch ($resultado[0]) {
-                case '💎': $ganancia = 50.00; break; // Jackpot
-                case '🔔': $ganancia = 20.00; break;
-                default:   $ganancia = 5.00;  break; // Frutas normales
+                case '💎':
+                    $ganancia = 50.00;
+                    break; // Jackpot
+                case '🔔':
+                    $ganancia = 20.00;
+                    break;
+                default:
+                    $ganancia = 5.00;
+                    break; // Frutas normales
             }
         }
         // Si salen dos cerezas al principio
@@ -313,6 +314,17 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
         }
 
         $monedero->save();
+
+        // [CORRECCIÓN] Guardar registro si ha ganado premio
+        if ($esVictoria) {
+            $transPremio = new \app\models\Transaccion();
+            $transPremio->id_usuario = Yii::$app->user->id;
+            $transPremio->tipo_operacion = 'Premio'; // Tipo Premio
+            $transPremio->categoria = 'Slots';
+            $transPremio->cantidad = $ganancia; // La cantidad ganada
+            $transPremio->estado = 'Completado';
+            $transPremio->save();
+        }
 
         // --- CORRECCIÓN CLAVE ---
         $gananciaFinal = isset($ganancia) ? $ganancia : 0;
@@ -343,13 +355,13 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $request = Yii::$app->request;
-        
+
         // Recogemos los datos y la cantidad apostada
         $tipoApuesta = $request->post('tipoApuesta');
         $valorApuesta = $request->post('valorApuesta');
-        
+
         // Convertimos a float y si no envían nada, asumimos 1€ por seguridad
-        $cantidadApuesta = (float)$request->post('cantidadApuesta', 1.00);
+        $cantidadApuesta = (float) $request->post('cantidadApuesta', 1.00);
 
         // Evitar apuestas negativas o cero
         if ($cantidadApuesta <= 0) {
@@ -359,7 +371,7 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
         if ($cantidadApuesta > 1000) {
             return ['success' => false, 'mensaje' => 'El límite máximo de apuesta es 1000€.'];
         }
-        
+
         // Cargar Usuario y Monedero
         $juego = $this->findModel($id);
         $usuario = Yii::$app->user->identity;
@@ -375,12 +387,14 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
 
         // girar la ruleta
         $numeroGanador = rand(0, 36);
-        
+
         // Lógica de colores
         $rojos = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-        $colorGanador = 'verde'; 
-        if (in_array($numeroGanador, $rojos)) $colorGanador = 'rojo';
-        elseif ($numeroGanador != 0) $colorGanador = 'negro';
+        $colorGanador = 'verde';
+        if (in_array($numeroGanador, $rojos))
+            $colorGanador = 'rojo';
+        elseif ($numeroGanador != 0)
+            $colorGanador = 'negro';
 
         $paridadGanadora = ($numeroGanador != 0 && $numeroGanador % 2 == 0) ? 'par' : 'impar';
 
@@ -393,15 +407,15 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
                 if ($numeroGanador == intval($valorApuesta)) {
                     $esVictoria = true;
                     // Pleno: Paga 35 a 1 + la apuesta (Total x36)
-                    $ganancia = $cantidadApuesta * 36; 
+                    $ganancia = $cantidadApuesta * 36;
                 }
                 break;
-            
+
             case 'color':
                 if ($colorGanador == $valorApuesta) {
                     $esVictoria = true;
                     // Color: Paga 1 a 1 (Doblas la apuesta)
-                    $ganancia = $cantidadApuesta * 2; 
+                    $ganancia = $cantidadApuesta * 2;
                 }
                 break;
 
@@ -409,7 +423,7 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
                 if ($numeroGanador != 0 && $paridadGanadora == $valorApuesta) {
                     $esVictoria = true;
                     // Par/Impar: Paga 1 a 1
-                    $ganancia = $cantidadApuesta * 2; 
+                    $ganancia = $cantidadApuesta * 2;
                 }
                 break;
         }
@@ -422,6 +436,17 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
         // Guardamos el monedero
         if (!$monedero->save()) {
              return ['success' => false, 'mensaje' => 'Error al actualizar saldo en BD.'];
+        }
+
+        // [CORRECCIÓN] Guardar registro si ha ganado premio
+        if ($esVictoria) {
+            $transPremio = new \app\models\Transaccion();
+            $transPremio->id_usuario = Yii::$app->user->id;
+            $transPremio->tipo_operacion = 'Premio';
+            $transPremio->categoria = 'Ruleta';
+            $transPremio->cantidad = $ganancia;
+            $transPremio->estado = 'Completado';
+            $transPremio->save();
         }
 
         // --- CORRECCIÓN CLAVE ---
@@ -455,13 +480,14 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
     /**
      * Genera una carta aleatoria 
      */
-    private function generarCarta() {
+    private function generarCarta()
+    {
         $palos = ['♥', '♦', '♣', '♠'];
         $valores = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        
+
         $palo = $palos[array_rand($palos)];
         $valor = $valores[array_rand($valores)];
-        
+
         // Calculamos el valor numérico
         $puntos = 0;
         if (is_numeric($valor)) {
@@ -478,13 +504,15 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
     /**
      * Calcula el total de una mano ajustando los Ases
      */
-    private function calcularMano($cartas) {
+    private function calcularMano($cartas)
+    {
         $total = 0;
         $ases = 0;
 
         foreach ($cartas as $c) {
             $total += $c['puntos'];
-            if ($c['valor'] === 'A') $ases++;
+            if ($c['valor'] === 'A')
+                $ases++;
         }
 
         // Si nos pasamos de 21 y tenemos Ases, los convertimos de 11 a 1
@@ -499,12 +527,13 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
     /**
      * INicio de la partida
      */
-    public function actionApiBlackjackIniciar($id) {
+    public function actionApiBlackjackIniciar($id)
+    {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $session = Yii::$app->session;
-        
+
         // Cobrar apuesta
-        $cantidad = (float)Yii::$app->request->post('cantidadApuesta', 1.00);
+        $cantidad = (float) Yii::$app->request->post('cantidadApuesta', 1.00);
         $usuario = Yii::$app->user->identity;
         $monedero = $usuario->monedero;
 
@@ -522,6 +551,14 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
         }
         $monedero->saldo_real -= $cantidad;
         $monedero->save();
+        // REGISTRO PARA EL GRÁFICO (W2/G2)
+        $trans = new \app\models\Transaccion();
+        $trans->id_usuario = Yii::$app->user->id;
+        $trans->tipo_operacion = 'Apuesta';
+        $trans->categoria = 'Cartas'; // Categoría para el gráfico
+        $trans->cantidad = $cantidad;
+        $trans->estado = 'Completado';
+        $trans->save();
 
         // Repartir cartas iniciales
         $manoJugador = [$this->generarCarta(), $this->generarCarta()];
@@ -545,12 +582,13 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
     /**
      * Pedir carta
      */
-    public function actionApiBlackjackPedir() {
+    public function actionApiBlackjackPedir()
+    {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $session = Yii::$app->session;
 
         $manoJugador = $session->get('bj_mano_jugador');
-        
+
         // Dar carta
         $nuevaCarta = $this->generarCarta();
         $manoJugador[] = $nuevaCarta;
@@ -582,10 +620,11 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
     /**
      * Plantarse 
      */
-    public function actionApiBlackjackPlantarse() {
+    public function actionApiBlackjackPlantarse()
+    {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $session = Yii::$app->session;
-        
+
         $manoJugador = $session->get('bj_mano_jugador');
         $manoDealer = $session->get('bj_mano_dealer');
         $apuesta = $session->get('bj_apuesta');
@@ -622,20 +661,34 @@ protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
         $usuario = Yii::$app->user->identity;
         $monedero = $usuario->monedero;
         
-        // CORREGIDO: Declaramos la ganancia total
-        $gananciaTotal = 0;
+        $gananciaTotal = 0; // Lo que cuenta para el torneo (ganancia neta)
+        $pagoTotal = 0;     // Lo que se ingresa en el monedero (apuesta + ganancia)
         
         if ($victoria) {
-            // Calculamos la ganancia neta (lo que gana aparte de recuperar su apuesta)
             $gananciaTotal = $apuesta; 
-            $monedero->saldo_real += ($apuesta * 2); // Devuelve apuesta + ganancia
+            $pagoTotal = ($apuesta * 2);
+            $monedero->saldo_real += $pagoTotal; 
         } elseif ($empate) {
-            $gananciaTotal = 0; // En empate no gana nada, solo recupera
-            $monedero->saldo_real += $apuesta; // Devuelve apuesta
+            $gananciaTotal = 0; 
+            $pagoTotal = $apuesta;
+            $monedero->saldo_real += $pagoTotal; 
         }
+        
         $monedero->save();
 
-        // NUEVO: Actualizar Torneo si aplica
+        // [CORRECCIÓN] Guardar la transacción del PREMIO o DEVOLUCIÓN
+        if ($pagoTotal > 0) {
+            $trans = new \app\models\Transaccion();
+            $trans->id_usuario = $usuario->id;
+            $trans->tipo_operacion = 'Premio';
+            $trans->categoria = 'Cartas';
+            $trans->cantidad = $pagoTotal;
+            $trans->estado = 'Completado';
+            $trans->referencia_externa = ($empate) ? 'Empate Blackjack' : 'Victoria Blackjack';
+            $trans->save();
+        }
+
+        // Actualizar Torneo
         $this->actualizarRankingTorneo($juegoId, $gananciaTotal);
 
         return [

@@ -8,6 +8,7 @@ use app\models\MensajeChat;
 /** @var app\models\MesaPrivada $mesa */
 /** @var app\models\MensajeChat $chatModel */
 /** @var app\models\MensajeChat[] $mensajes */
+/** @var app\models\Juego|null $juegoAsociado */
 
 $this->title = 'Mesa: ' . $mesa->tipo_juego;
 // CSS básico para el chat
@@ -32,12 +33,24 @@ $this->registerCss("
                     </h5>
                 </div>
                 <div class="card-body p-0">
-                    <div class="game-area">
-                        <div class="text-center">
-                            <h3>[Aquí se cargaría el módulo visual del juego]</h3>
-                            <p class="text-muted">Desarrollo de juego correpondiente a Grupos G3/G4</p>
-                            <i class="bi bi-joystick" style="font-size: 5rem;"></i>
-                        </div>
+                    <div class="game-area" style="height: 600px; overflow: hidden; background: #000;">
+                        <?php if ($juegoAsociado): ?>
+                            <!-- INTEGRACIÓN EXITOSA: Cargamos el juego real mediante IFRAME -->
+                            <iframe src="<?= \yii\helpers\Url::to(['juego/jugar', 'id' => $juegoAsociado->id]) ?>"
+                                style="width: 100%; height: 100%; border: none;" title="Juego de Casino">
+                            </iframe>
+                        <?php else: ?>
+                            <!-- FALLBACK: Si no se encuentra un juego compatible -->
+                            <div class="text-center p-5">
+                                <h3 class="text-warning"><i class="bi bi-exclamation-triangle"></i> Módulo de Juego no
+                                    detectado</h3>
+                                <p>No se ha encontrado un juego en el catálogo llamado
+                                    <strong>"<?= Html::encode($mesa->tipo_juego) ?>"</strong>.
+                                </p>
+                                <p class="text-muted small">Prueba a crear una mesa con nombre: <em>Blackjack, Ruleta,
+                                        Slots...</em></p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="card-footer">

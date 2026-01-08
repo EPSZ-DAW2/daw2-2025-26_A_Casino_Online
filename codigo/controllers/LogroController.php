@@ -18,21 +18,21 @@ use app\models\Usuario;
 class LogroController extends Controller
 {
     /**
-     * {@inheritdoc}
+     * Comportamientos y Filtros (Seguridad G6)
+     * Define quién puede acceder a este controlador.
      */
     public function behaviors()
     {
         return [
-            // Control de Acceso: Solo administradores pueden gestionar logros
             'access' => [
                 'class' => AccessControl::class,
                 'rules' => [
                     [
+                        // REGLA DE ORO: Solo Admins y SuperAdmins pueden gestionar logros.
+                        // Los jugadores normales solo pueden VERLOS (en GamificacionController), no editarlos.
                         'allow' => true,
                         'roles' => ['@'], // Usuarios autenticados
                         'matchCallback' => function ($rule, $action) {
-                            // Solo permitir si tiene permiso de gestión (Admin/SuperAdmin)
-                            // Usamos el método helper del modelo Usuario
                             return Yii::$app->user->identity->esAdmin() || Yii::$app->user->identity->esSuperAdmin();
                         }
                     ],

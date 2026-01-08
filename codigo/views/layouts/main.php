@@ -76,7 +76,7 @@ $identity = Yii::$app->user->identity;
                     // Si falla la base de datos, no hacemos nada
                 }
                 // --- FIN LÓGICA ---
-
+        
                 // Botón del Grupo 5 (Fraude + Bolita Roja)
                 $menuItems[] = [
                     'label' => '🚨 FRAUDE' . $badgeHTML, // Añadimos la bolita al texto
@@ -85,7 +85,12 @@ $identity = Yii::$app->user->identity;
                 ];
             }
 
-            // 3. GESTIÓN FINANCIERA (G2)
+            // 3. GESTIÓN DE LOGROS (G6)
+            if ($identity->esAdmin() || $identity->esSuperAdmin()) {
+                $menuItems[] = ['label' => '🏆 LOGROS', 'url' => ['/logro/index'], 'linkOptions' => ['class' => 'text-warning fw-bold']];
+            }
+
+            // 4. GESTIÓN FINANCIERA (G2)
             if ($identity->puedeGestionarDinero()) {
                 $menuItems[] = ['label' => '💰 PAGOS', 'url' => ['/transaccion/index'], 'linkOptions' => ['class' => 'text-info fw-bold']];
             }
@@ -128,7 +133,9 @@ $identity = Yii::$app->user->identity;
 
             echo '<ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="userDropdown">';
             echo '<li>' . Html::a('👤 Mi Perfil', ['/site/perfil'], ['class' => 'dropdown-item']) . '</li>';
+            echo '<li>' . Html::a('🏆 Mi Sala de Trofeos', ['/gamificacion/index'], ['class' => 'dropdown-item']) . '</li>';
             echo '<li>' . Html::a('💳 Mi Monedero', ['/monedero/index'], ['class' => 'dropdown-item']) . '</li>';
+            echo '<li>' . Html::a('🕵️ Panel Afiliados', ['/afiliado/index'], ['class' => 'dropdown-item']) . '</li>';
             echo '<li><hr class="dropdown-divider"></li>';
             echo '<li>' . Html::beginForm(['/site/logout'])
                 . Html::submitButton('Cerrar Sesión', ['class' => 'dropdown-item text-danger'])

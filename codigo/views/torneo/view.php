@@ -24,7 +24,6 @@ $this->title = $model->titulo;
         <div class="my-4">
             <?php 
             $yaInscrito = false;
-            // Solo comprobamos si el usuario está logueado
             if (!Yii::$app->user->isGuest) {
                 $yaInscrito = \app\models\ParticipacionTorneo::find()
                     ->where(['id_torneo' => $model->id, 'id_usuario' => Yii::$app->user->id])
@@ -32,45 +31,64 @@ $this->title = $model->titulo;
             }
             ?>
 
-            <?php if ($yaInscrito && ($model->estado === 'Abierto' || $model->estado === 'En Curso')): ?>
-                <div class="alert alert-success d-inline-block px-5 py-3 shadow">
-                    <h4 class="alert-heading">✅ ¡Ya estás dentro!</h4>
-                    <p class="mb-3">El torneo está activo. Juega ahora para subir en el ranking.</p>
-                    
-                    <?= Html::a('🎮 JUGAR AHORA Y SUMAR PUNTOS', 
-                        ['/juego/jugar', 'id' => $model->id_juego_asociado, 'id_torneo' => $model->id], 
-                        [
-                            'class' => 'btn btn-lg btn-success font-weight-bold pulse-button',
-                            'style' => 'font-size: 1.5rem; padding: 15px 40px; border-radius: 50px;'
-                        ]
-                    ) ?>
-                </div>
+            <?php if ($yaInscrito): ?>
+                
+                <?php if ($model->estado === 'En Curso'): ?>
+                    <div class="alert alert-success d-inline-block px-5 py-3 shadow">
+                        <h4 class="alert-heading">🔥 ¡El torneo está EN VIVO!</h4>
+                        <p class="mb-3">Entra ahora y acumula puntos.</p>
+                        <?= Html::a('🎮 JUGAR AHORA', 
+                            ['/juego/jugar', 'id' => $model->id_juego_asociado, 'id_torneo' => $model->id], 
+                            ['class' => 'btn btn-lg btn-success font-weight-bold pulse-button']
+                        ) ?>
+                    </div>
 
-            <?php elseif ($model->estado === 'Abierto' || $model->estado === 'En Curso'): ?>
-                <span class="badge bg-success p-2 mb-3" style="font-size: 1rem;">Inscripciones Abiertas</span>
-                <br>
-                <?php if (!Yii::$app->user->isGuest): ?>
-                    <?= Html::a('🎟️ Pagar Entrada (' . $model->coste_entrada . '€) y Unirse', 
+                <?php elseif ($model->estado === 'Abierto'): ?>
+                    <div class="alert alert-info d-inline-block px-5 py-3">
+                        <h4 class="alert-heading">✅ Pre-inscripción Correcta</h4>
+                        <p class="mb-0">Ya tienes tu plaza. Espera a que el administrador inicie el torneo para jugar.</p>
+                    </div>
+                <?php endif; ?>
+
+            <?php else: ?>
+                
+                <?php if ($model->estado === 'En Curso'): ?>
+                    <span class="badge bg-danger p-2 mb-3 spinner-grow-sm">🔴 Torneo En Vivo - ¡Únete ya!</span>
+                    <br>
+                    <?= Html::a('⚡ Pagar Entrada (' . $model->coste_entrada . '€) y Jugar', 
                         ['unirse', 'id' => $model->id], 
                         [
-                            'class' => 'btn btn-primary btn-lg shadow',
+                            'class' => 'btn btn-danger btn-lg shadow',
                             'data' => [
-                                'confirm' => '¿Confirmas el pago de ' . $model->coste_entrada . '€ de tu monedero para entrar al torneo?',
+                                'confirm' => 'El torneo ya ha empezado. ¿Quieres pagar ' . $model->coste_entrada . '€ y entrar ahora mismo?',
                                 'method' => 'post',
                             ],
                         ]
                     ) ?>
-                <?php else: ?>
-                    <?= Html::a('Inicia Sesión para Participar', ['/site/login'], ['class' => 'btn btn-outline-light']) ?>
+
+                <?php elseif ($model->estado === 'Abierto'): ?>
+                    <span class="badge bg-success p-2 mb-3">Inscripciones Abiertas</span>
+                    <br>
+                    <?= Html::a('🎟️ Pre-inscribirse (' . $model->coste_entrada . '€)', 
+                        ['unirse', 'id' => $model->id], 
+                        [
+                            'class' => 'btn btn-primary btn-lg shadow',
+                            'data' => [
+                                'confirm' => '¿Confirmas el pago de ' . $model->coste_entrada . '€ para reservar tu plaza?',
+                                'method' => 'post',
+                            ],
+                        ]
+                    ) ?>
                 <?php endif; ?>
 
-            <?php else: ?>
+            <?php endif; ?>
+
+            <?php if ($model->estado === 'Finalizado' || $model->estado === 'Cancelado'): ?>
                 <div class="alert alert-secondary d-inline-block">
-                    Este torneo está <strong><?= strtoupper($model->estado) ?></strong>. No admite más jugadas.
+                    Este torneo está <strong><?= strtoupper($model->estado) ?></strong>.
                 </div>
             <?php endif; ?>
 
-            
             <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin()): ?>
                 <hr class="border-light mt-4">
                 <div class="btn-group">
@@ -78,18 +96,16 @@ $this->title = $model->titulo;
                     <?php if ($model->estado !== 'Cancelado' && $model->estado !== 'Finalizado'): ?>
                         <?= Html::a('🛑 Finalizar Torneo', ['finalizar', 'id' => $model->id], [
                             'class' => 'btn btn-warning btn-sm',
-                            'data' => ['confirm' => '¿Seguro que quieres cerrar el torneo y repartir premios?', 'method' => 'post']
+                            'data' => ['confirm' => '¿Cerrar torneo y dar premios?', 'method' => 'post']
                         ]) ?>
-                        <?= Html::a('⚠ Cancelar y Devolver Dinero', ['cancelar', 'id' => $model->id], [
+                        <?= Html::a('⚠ Cancelar', ['cancelar', 'id' => $model->id], [
                             'class' => 'btn btn-danger btn-sm',
-                            'data' => ['confirm' => '¿CANCELAR TORNEO? Se devolverá el dinero a todos.', 'method' => 'post']
+                            'data' => ['confirm' => '¿CANCELAR TORNEO? Se devolverá el dinero.', 'method' => 'post']
                         ]) ?>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
-
         </div>
-    </div>
 
     <div class="row">
         <div class="col-md-8 offset-md-2">
