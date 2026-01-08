@@ -155,10 +155,28 @@ public function actionUnirse($id)
 {
     $torneo = $this->findModel($id);
     $usuario = Yii::$app->user->identity;
+    
+    // --- CORRECCIÓN DEL ERROR ---
+    // Intentamos obtener el monedero
     $monedero = $usuario->monedero;
 
-    // --- AQUÍ ESTÁ LA CLAVE ---
-    // Si tras el merge esta línea pone solo 'Abierto', cámbiala por esta:
+    // SI NO EXISTE (es null), LO CREAMOS AUTOMÁTICAMENTE
+    if (!$monedero) {
+        $monedero = new \app\models\Monedero();
+        $monedero->id_usuario = $usuario->id;
+        $monedero->saldo_real = 0.00;
+        $monedero->saldo_bono = 0.00;
+        $monedero->divisa = 'EUR';
+        if (!$monedero->save()) {
+            Yii::$app->session->setFlash('error', 'Error crítico: No se pudo crear tu monedero.');
+            return $this->redirect(['index']);
+        }
+        // Refrescamos la relación
+        $usuario->refresh(); 
+    }
+    // -----------------------------
+
+    // 1. Validaciones de estado (Late Registration)
     if ($torneo->estado !== 'Abierto' && $torneo->estado !== 'En Curso') {
         Yii::$app->session->setFlash('error', 'Este torneo no admite inscripciones ahora.');
         return $this->redirect(['view', 'id' => $id]);
@@ -179,7 +197,7 @@ public function actionUnirse($id)
         return $this->redirect(['view', 'id' => $id]);
     }
 
-    // 3. Validación de fondos
+    // 3. Validación de fondos (AHORA YA NO DARÁ ERROR PORQUE $monedero EXISTE)
     $saldo = (float) $monedero->saldo_real;
     $coste = (float) $torneo->coste_entrada;
 
