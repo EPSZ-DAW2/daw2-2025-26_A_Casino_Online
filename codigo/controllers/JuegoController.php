@@ -174,8 +174,9 @@ class JuegoController extends Controller
 
     /**
      * Pantalla de Juego Individual (La Sala)
+     * AHORA SOPORTA TORNEOS
      */
-    public function actionJugar($id)
+    public function actionJugar($id, $id_torneo = null) // <--- Aceptamos id_torneo opcional
     {
         $model = $this->findModel($id);
 
@@ -185,8 +186,20 @@ class JuegoController extends Controller
             Yii::$app->session->setFlash('error', 'El juego "' . $model->nombre . '" está en mantenimiento.');
             return $this->redirect(['lobby']);
         }
-        // -------------------------------------------------------------------
-
+        // --- MODO TORNEO ---
+        if ($id_torneo !== null) {
+            // Si venimos de un torneo, NO comprobamos saldo real, porque ya pagó la entrada.
+            // Aquí podrías añadir lógica extra: Verificar que el torneo está activo, etc.
+            
+            // Renderizamos la vista normal, pero le pasamos el dato del torneo
+            $this->layout = false;
+            return $this->render('jugar', [
+                'model' => $model,
+                'saldo' => 0, // En torneo el saldo visual da igual, importan los puntos
+                'es_torneo' => true,
+                'id_torneo' => $id_torneo
+            ]);
+        }
         if (Yii::$app->user->identity->monedero) {
             $saldo = Yii::$app->user->identity->monedero->saldo_real;
         } else {
@@ -196,9 +209,42 @@ class JuegoController extends Controller
         $this->layout = false;
         return $this->render('jugar', [
             'model' => $model,
-            'saldo' => $saldo
+            'saldo' => $saldo,
+            'es_torneo' => false,
+            'id_torneo' => null
         ]);
     }
+
+/**
+ * Busca si hay un torneo activo y suma puntos.
+ * Protegida contra errores si no encuentra el usuario o torneo.
+ */
+protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
+{
+    // Si no ganó nada o es negativo, salimos
+    if ($gananciaObtenida <= 0) return;
+
+    $usuarioId = Yii::$app->user->id;
+    if (!$usuarioId) return; // Por si acaso se perdió la sesión
+
+    // Buscar participación en torneos Activos O Abiertos
+    $participacion = \app\models\ParticipacionTorneo::find()
+        ->alias('p')
+        ->joinWith('torneo t')
+        ->where(['t.id_juego_asociado' => $idJuego])
+        ->andWhere(['in', 't.estado', ['En Curso', 'Abierto']]) // Aceptamos ambos estados
+        ->andWhere(['p.id_usuario' => $usuarioId])
+        ->one();
+
+    if ($participacion) {
+        // 1€ = 1000 Puntos
+        $puntosGanados = (int)($gananciaObtenida * 1000);
+        
+        // Sumar y Guardar
+        $participacion->puntuacion_actual += $puntosGanados;
+        $participacion->save(false); // false para saltar validaciones estrictas y evitar fallos
+    }
+}
 
     /**
      * Juego del slot la tragamonedas
@@ -267,22 +313,33 @@ class JuegoController extends Controller
             $monedero->saldo_real += $ganancia;
         }
 
-        // Guardamos el nuevo saldo en la BD
         $monedero->save();
-        // REGISTRO PARA EL GRÁFICO (W2/G2)
-        $trans = new \app\models\Transaccion();
-        $trans->id_usuario = Yii::$app->user->id;
-        $trans->tipo_operacion = 'Apuesta';
-        $trans->categoria = 'Slots'; // Categoría para el gráfico
-        $trans->cantidad = $costeTirada;
-        $trans->estado = 'Completado';
-        $trans->save();
+
+        // [CORRECCIÓN] Guardar registro si ha ganado premio
+        if ($esVictoria) {
+            $transPremio = new \app\models\Transaccion();
+            $transPremio->id_usuario = Yii::$app->user->id;
+            $transPremio->tipo_operacion = 'Premio'; // Tipo Premio
+            $transPremio->categoria = 'Slots';
+            $transPremio->cantidad = $ganancia; // La cantidad ganada
+            $transPremio->estado = 'Completado';
+            $transPremio->save();
+        }
+
+        // --- CORRECCIÓN CLAVE ---
+        $gananciaFinal = isset($ganancia) ? $ganancia : 0;
+
+        try {
+            $this->actualizarRankingTorneo($id, $gananciaFinal); 
+        } catch (\Exception $e) {
+            Yii::error("Error torneo slot: " . $e->getMessage());
+        }
 
         // Devolvemos el resultado al juego (JS)
         return [
             'success' => true,
-            'rodillos' => $resultado, // Ej: ['🍒', '💎', '🍒']
-            'premio' => $ganancia,
+            'rodillos' => $resultado, 
+            'premio' => $gananciaFinal,
             'nuevoSaldo' => $monedero->saldo_real,
             'esVictoria' => $esVictoria
         ];
@@ -375,25 +432,43 @@ class JuegoController extends Controller
         if ($esVictoria) {
             $monedero->saldo_real += $ganancia;
         }
-        $monedero->save();
-        // REGISTRO PARA EL GRÁFICO (W2/G2)
-        $trans = new \app\models\Transaccion();
-        $trans->id_usuario = Yii::$app->user->id;
-        $trans->tipo_operacion = 'Apuesta';
-        $trans->categoria = 'Ruleta'; // Categoría para el gráfico
-        $trans->cantidad = $cantidadApuesta;
-        $trans->estado = 'Completado';
-        $trans->save();
+        
+        // Guardamos el monedero
+        if (!$monedero->save()) {
+             return ['success' => false, 'mensaje' => 'Error al actualizar saldo en BD.'];
+        }
+        // [CORRECCIÓN] Guardar registro si ha ganado premio
+        if ($esVictoria) {
+            $transPremio = new \app\models\Transaccion();
+            $transPremio->id_usuario = Yii::$app->user->id;
+            $transPremio->tipo_operacion = 'Premio';
+            $transPremio->categoria = 'Ruleta';
+            $transPremio->cantidad = $ganancia;
+            $transPremio->estado = 'Completado';
+            $transPremio->save();
+        }
 
-        // Devolver resultado (añadimos la cantidad para feedback visual)
+        // --- CORRECCIÓN CLAVE ---
+        // Verificamos que $ganancia esté definida. Si no ganó, es 0.
+        $gananciaFinal = isset($ganancia) ? $ganancia : 0;
+        
+        // Intentamos actualizar el torneo, capturando errores para que no salga "Error de Conexión"
+        try {
+            $this->actualizarRankingTorneo($id, $gananciaFinal);
+        } catch (\Exception $e) {
+            // Si falla el torneo, no detenemos el juego, solo lo registramos en el log interno
+            Yii::error("Error actualizando torneo: " . $e->getMessage());
+        }
+
+        // 7. Devolver resultado
         return [
             'success' => true,
             'numero' => $numeroGanador,
             'color' => $colorGanador,
-            'nuevoSaldo' => $monedero->saldo_real,
+            'nuevoSaldo' => $monedero->saldo_real, // Importante: Saldo actualizado
             'esVictoria' => $esVictoria,
-            'premio' => $ganancia,
-            'apuesta' => $cantidadApuesta // Devolvemos el dato para mostrarlo
+            'premio' => $gananciaFinal,
+            'apuesta' => $cantidadApuesta 
         ];
     }
 
@@ -584,13 +659,36 @@ class JuegoController extends Controller
         // Pagos
         $usuario = Yii::$app->user->identity;
         $monedero = $usuario->monedero;
-
+        
+        $gananciaTotal = 0; // Lo que cuenta para el torneo (ganancia neta)
+        $pagoTotal = 0;     // Lo que se ingresa en el monedero (apuesta + ganancia)
+        
         if ($victoria) {
-            $monedero->saldo_real += ($apuesta * 2); // Devuelve apuesta + ganancia
+            $gananciaTotal = $apuesta; 
+            $pagoTotal = ($apuesta * 2);
+            $monedero->saldo_real += $pagoTotal; 
         } elseif ($empate) {
-            $monedero->saldo_real += $apuesta; // Devuelve apuesta
+            $gananciaTotal = 0; 
+            $pagoTotal = $apuesta;
+            $monedero->saldo_real += $pagoTotal; 
         }
+        
         $monedero->save();
+
+        // [CORRECCIÓN] Guardar la transacción del PREMIO o DEVOLUCIÓN
+        if ($pagoTotal > 0) {
+            $trans = new \app\models\Transaccion();
+            $trans->id_usuario = $usuario->id;
+            $trans->tipo_operacion = 'Premio';
+            $trans->categoria = 'Cartas';
+            $trans->cantidad = $pagoTotal;
+            $trans->estado = 'Completado';
+            $trans->referencia_externa = ($empate) ? 'Empate Blackjack' : 'Victoria Blackjack';
+            $trans->save();
+        }
+
+        // Actualizar Torneo
+        $this->actualizarRankingTorneo($juegoId, $gananciaTotal);
 
         return [
             'success' => true,
@@ -602,4 +700,5 @@ class JuegoController extends Controller
             'nuevoSaldo' => $monedero->saldo_real
         ];
     }
+
 }
