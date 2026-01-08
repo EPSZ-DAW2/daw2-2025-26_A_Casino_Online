@@ -11,14 +11,13 @@ use app\models\Transaccion;
 use yii\data\ActiveDataProvider;
 
 /**
-* MonederoController gestiona la lógica financiera del lado del usuario (G2-W2).
-*/
+ * MonederoController gestiona la lógica financiera del lado del usuario (G2-W2).
+ */
 class MonederoController extends Controller
 {
     /**
-    * BEHAVIORS: Configura las reglas de acceso.
-    * Solo permitimos que usuarios autenticados ('@') accedan a estas funciones.
-    */
+     * Configuración de control de acceso.
+     */
     public function behaviors()
     {
         return [
@@ -35,9 +34,8 @@ class MonederoController extends Controller
     }
 
     /**
-    * VISTA PRINCIPAL (index):
-    * Muestra el saldo actual, el historial y los datos para la gráfica.
-    */
+     * Vista principal: Muestra saldo, historial y gráfica de gastos.
+     */
     public function actionIndex()
     {
         $usuarioId = Yii::$app->user->id;
@@ -59,22 +57,21 @@ class MonederoController extends Controller
             'dataProvider' => new ActiveDataProvider([
                 'query' => Transaccion::find()->where(['id_usuario' => $usuarioId])->orderBy(['fecha_hora' => SORT_DESC]),
             ]),
-            // DATOS PARA LA GRÁFICA (W2):
-            // Agrupamos las transacciones por categoría para alimentar el Chart.js
-            'datosGrafica' => $gastosPorCategoria, // Enviamos los datos procesados
+            // Datos para la gráfica (Agrupados por categoría)
+            'datosGrafica' => $gastosPorCategoria,
         ]);
     }
 
     /**
-    * ACCIÓN DEPOSITAR (G2):
-    * Procesa los ingresos mediante Tarjeta o Bizum.
-    */
+     * ACCIÓN DEPOSITAR (G2):
+     * Procesa los ingresos mediante Tarjeta o Bizum.
+     */
     public function actionDepositar($cantidad, $metodo, $dato)
     {
         $usuarioId = Yii::$app->user->id;
         $monedero = Monedero::findOne(['id_usuario' => $usuarioId]);
 
-        // IMPORTANTE: Si es un usuario nuevo, es posible que no tenga una fila en la tabla 'monedero'
+        // Verifica si el usuario tiene monedero, si no, crea uno nuevo.
         if (!$monedero) {
             $monedero = new Monedero();
             $monedero->id_usuario = $usuarioId;
@@ -83,7 +80,6 @@ class MonederoController extends Controller
         }
 
         if ($cantidad > 0) {
-            // TRANSACCIÓN DE BD: Aseguramos que si falla el registro, no se sume el dinero.
             $dbTrans = Yii::$app->db->beginTransaction();
             try {
                 // Actualizar el saldo en el monedero
@@ -113,15 +109,15 @@ class MonederoController extends Controller
     }
 
     /**
-    * ACCIÓN RETIRAR (G2):
-    * Gestiona las solicitudes de cobro del usuario.
-    */
+     * ACCIÓN RETIRAR (G2):
+     * Gestiona las solicitudes de cobro del usuario.
+     */
     public function actionRetirar($cantidad)
     {
         $usuarioId = Yii::$app->user->id;
         $monedero = Monedero::findOne(['id_usuario' => $usuarioId]);
 
-       // VALIDACIÓN DE SALDO: Solo se puede retirar del saldo REAL.
+        // VALIDACIÓN DE SALDO: Solo se puede retirar del saldo REAL.
         if ($monedero && $cantidad > 0 && $cantidad <= $monedero->saldo_real) {
             $dbTrans = Yii::$app->db->beginTransaction();
             try {

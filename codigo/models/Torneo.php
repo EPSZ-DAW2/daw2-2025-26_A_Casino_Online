@@ -111,8 +111,8 @@ class Torneo extends \yii\db\ActiveRecord
             return false;
         }
 
-        // --- AUTOMATIZACIÓN DEL CIERRE ---
-        
+        // Cierre automático y reparto de premios
+
         $transaction = Yii::$app->db->beginTransaction();
         try {
             // Buscar al ganador
@@ -123,7 +123,7 @@ class Torneo extends \yii\db\ActiveRecord
 
             if ($ganadorParticipacion) {
                 $premio = $this->bolsa_premios;
-                
+
                 // Dar dinero
                 $monedero = Monedero::findOne(['id_usuario' => $ganadorParticipacion->id_usuario]);
                 if ($monedero) {
@@ -161,11 +161,8 @@ class Torneo extends \yii\db\ActiveRecord
     }
 
     /**
-     * LÓGICA MAESTRA DEL TORNEO
-     * Comprueba las fechas y actualiza el estado automáticamente.
-     * 1. Futuro -> Abierto
-     * 2. Presente -> En Curso
-     * 3. Pasado -> Finalizado
+     * Actualiza el estado del torneo según la fecha y hora actual.
+     * Estados: Abierto (Pre-inscripción), En Curso, Finalizado.
      */
     public function actualizarEstadoEnBaseAlTiempo()
     {
@@ -182,7 +179,7 @@ class Torneo extends \yii\db\ActiveRecord
         if ($ahora > $fin && $this->estado !== 'Finalizado') {
             // Llamamos a la lógica de repartir premios que hicimos antes
             // (Si no tienes el código de finalizar aquí, avísame, pero asumo que lo tienes del paso anterior)
-            $this->comprobarFinalizacionAutomatica(); 
+            $this->comprobarFinalizacionAutomatica();
             return;
         }
 

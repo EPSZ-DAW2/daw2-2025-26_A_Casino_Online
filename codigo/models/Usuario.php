@@ -52,7 +52,7 @@ class Usuario extends ActiveRecord implements IdentityInterface
         return 'usuario';
     }
     //Constantes para los roles
-    const ROL_SUPERADMIN = 'superadmin'; // El Dios del sistema
+    const ROL_SUPERADMIN = 'superadmin'; // Acceso total al sistema
     const ROL_ADMIN = 'admin';      // Gestión de usuarios (G1)
     const ROL_FINANCIERO = 'financiero'; // Gestión de dinero/retiros (G2)
     const ROL_CROUPIER = 'croupier';   // Gestión de juegos/torneos (G3/G4)
