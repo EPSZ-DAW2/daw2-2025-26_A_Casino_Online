@@ -25,11 +25,33 @@ class TorneoController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => \yii\filters\AccessControl::class,
+                'rules' => [
+                    // REGLA 1: Permitir ver (index, view) y unirse a todo el mundo (o solo logueados según prefieras)
+                    [
+                        'actions' => ['index', 'view', 'unirse'],
+                        'allow' => true,
+                        // 'roles' => ['?'], // Si quieres que invitados vean
+                    ],
+                    // REGLA 2: Solo ADMIN puede Crear, Editar, Borrar, Cancelar y Finalizar
+                    [
+                        'actions' => ['create', 'update', 'delete', 'cancelar', 'finalizar'],
+                        'allow' => true,
+                        'roles' => ['@'], // Usuario logueado
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->identity->esAdmin();
+                        }
+                    ],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
                     'delete' => ['POST'],
                     'cancelar' => ['POST'],
+                    'finalizar' => ['POST'],
+                    'unirse' => ['POST'],
                 ],
             ],
         ];
@@ -103,80 +125,132 @@ class TorneoController extends Controller
         ]);
     }
 
-    /**
-     * ACCIÓN TRUCADA: Inscribirse sin Login real.
-     */
     public function actionUnirse($id)
-    {
-        // --- HACK: BYPASS DE SEGURIDAD ---
-        // Forzamos ser el usuario 1 porque el login no funciona
-        $usuarioId = 2; 
-        // ---------------------------------
+{
+    $torneo = $this->findModel($id);
+    $usuario = Yii::$app->user->identity;
+    $monedero = $usuario->monedero; // Asegúrate de tener la relación en el modelo Usuario
 
-        $torneo = $this->findModel($id);
-
-        // Validaciones básicas del torneo
-        // Permitimos unirse si está Abierto O si está En Curso (Registro tardío)
-        if ($torneo->estado !== 'Abierto' && $torneo->estado !== 'En Curso') {
-            Yii::$app->session->setFlash('error', 'El torneo ha finalizado o está cancelado.');
-            return $this->redirect(['index']);
-        }
-
-        // Comprobar si ya está inscrito
-        $yaInscrito = ParticipacionTorneo::find()
-            ->where(['id_torneo' => $id, 'id_usuario' => $usuarioId])
-            ->exists();
-
-        if ($yaInscrito) {
-            Yii::$app->session->setFlash('warning', '¡Ya estás dentro de este torneo!');
-            return $this->redirect(['view', 'id' => $id]);
-        }
-
-        // Buscar monedero (Si no existe, fallará, asegúrate de tenerlo en BD)
-        $monedero = Monedero::findOne(['id_usuario' => $usuarioId]);
-        
-        if (!$monedero) {
-            Yii::$app->session->setFlash('error', 'Error: El usuario 1 no tiene monedero creado en la BD.');
-            return $this->redirect(['index']);
-        }
-
-        // Lógica de cobro
-        $saldoTotal = $monedero->saldo_real + $monedero->saldo_bono;
-        if ($saldoTotal < $torneo->coste_entrada) {
-            Yii::$app->session->setFlash('error', 'Saldo insuficiente.');
-            return $this->redirect(['index']);
-        }
-
-        // TRANSACCIÓN
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            // Restar dinero
-            if ($monedero->saldo_real >= $torneo->coste_entrada) {
-                $monedero->saldo_real -= $torneo->coste_entrada;
-            } else {
-                $falta = $torneo->coste_entrada - $monedero->saldo_real;
-                $monedero->saldo_real = 0;
-                $monedero->saldo_bono -= $falta;
-            }
-            $monedero->save();
-
-            // Crear inscripción
-            $inscripcion = new ParticipacionTorneo();
-            $inscripcion->id_torneo = $id;
-            $inscripcion->id_usuario = $usuarioId;
-            $inscripcion->puntuacion_actual = 0;
-            $inscripcion->save();
-
-            $transaction->commit();
-            Yii::$app->session->setFlash('success', '¡Inscripción exitosa (Modo Test)!');
-
-        } catch (\Exception $e) {
-            $transaction->rollBack();
-            Yii::$app->session->setFlash('error', 'Error técnico.');
-        }
-
+    // 1. Validaciones básicas
+    if ($torneo->estado !== 'Abierto') {
+        Yii::$app->session->setFlash('error', 'Este torneo no admite inscripciones ahora.');
         return $this->redirect(['view', 'id' => $id]);
     }
+
+    // 2. Comprobar si ya está inscrito
+    $yaInscrito = \app\models\ParticipacionTorneo::find()
+        ->where(['id_torneo' => $id, 'id_usuario' => $usuario->id])
+        ->exists();
+
+    if ($yaInscrito) {
+        Yii::$app->session->setFlash('warning', '¡Ya estás inscrito en este torneo!');
+        return $this->redirect(['view', 'id' => $id]);
+    }
+
+    // 3. VALIDACIÓN DE FONDOS (Aquí estaba el problema)
+    // Convertimos todo a float para evitar errores de texto vs número
+    $saldo = (float) $monedero->saldo_real;
+    $coste = (float) $torneo->coste_entrada;
+
+    if ($saldo < $coste) {
+        Yii::$app->session->setFlash('error', "Fondos insuficientes. Tienes $saldo € y necesitas $coste €.");
+        return $this->redirect(['view', 'id' => $id]);
+    }
+
+    // 4. TRANSACCIÓN: Cobrar y Unir
+    $transaction = Yii::$app->db->beginTransaction();
+    try {
+        // A. Restar Saldo
+        $monedero->saldo_real -= $coste;
+        if (!$monedero->save()) throw new \Exception("Error al actualizar monedero.");
+
+        // B. Crear Participación (Puntuación inicial 0)
+        $participacion = new \app\models\ParticipacionTorneo();
+        $participacion->id_torneo = $id;
+        $participacion->id_usuario = $usuario->id;
+        $participacion->puntuacion_actual = 0; // Empieza con 0 ganancias
+        if (!$participacion->save()) throw new \Exception("Error al crear participación.");
+
+        // C. Crear Transacción (Historial)
+        $trans = new \app\models\Transaccion();
+        $trans->id_usuario = $usuario->id;
+        $trans->tipo_operacion = 'Apuesta'; // O 'Entrada Torneo'
+        $trans->cantidad = $coste;
+        $trans->metodo_pago = 'Monedero';
+        $trans->estado = 'Completado';
+        $trans->referencia_externa = "Inscripción Torneo #" . $torneo->id;
+        $trans->save();
+
+        $transaction->commit();
+        Yii::$app->session->setFlash('success', '¡Inscripción realizada con éxito! ¡A jugar!');
+        return $this->redirect(['/juego/jugar', 'id' => $torneo->id_juego_asociado, 'id_torneo' => $torneo->id]);
+    } catch (\Exception $e) {
+        $transaction->rollBack();
+        Yii::$app->session->setFlash('error', 'Ocurrió un error técnico: ' . $e->getMessage());
+    }
+
+    return $this->redirect(['view', 'id' => $id]);
+}
+
+    public function actionFinalizar($id)
+{
+    // Solo admin puede forzar finalizar (o mediante CronJob)
+    if (!Yii::$app->user->identity->esAdmin()) return $this->redirect(['index']);
+
+    $torneo = $this->findModel($id);
+    
+    if ($torneo->estado === 'Finalizado') {
+        return $this->redirect(['view', 'id' => $id]);
+    }
+
+    // Buscar al ganador (El que tenga más puntuacion_actual)
+    $ganadorParticipacion = \app\models\ParticipacionTorneo::find()
+        ->where(['id_torneo' => $id])
+        ->orderBy(['puntuacion_actual' => SORT_DESC])
+        ->one();
+
+    $transaction = Yii::$app->db->beginTransaction();
+    try {
+        $torneo->estado = 'Finalizado';
+        $torneo->save();
+
+        if ($ganadorParticipacion) {
+            // Dar premio al ganador
+            $premio = $torneo->bolsa_premios;
+            
+            // Actualizar monedero del ganador
+            $monederoGanador = \app\models\Monedero::findOne(['id_usuario' => $ganadorParticipacion->id_usuario]);
+            $monederoGanador->saldo_real += $premio;
+            $monederoGanador->save();
+
+            // Guardar registro en participación
+            $ganadorParticipacion->posicion_final = 1;
+            $ganadorParticipacion->premio_ganado = $premio;
+            $ganadorParticipacion->save();
+
+            // Crear transacción de premio
+            $trans = new \app\models\Transaccion();
+            $trans->id_usuario = $ganadorParticipacion->id_usuario;
+            $trans->tipo_operacion = 'Premio';
+            $trans->cantidad = $premio;
+            $trans->metodo_pago = 'Monedero';
+            $trans->estado = 'Completado';
+            $trans->referencia_externa = "Premio Torneo: " . $torneo->titulo;
+            $trans->save();
+            
+            Yii::$app->session->setFlash('success', 'Torneo finalizado. Ganador: ' . $ganadorParticipacion->usuario->nick);
+        } else {
+            Yii::$app->session->setFlash('warning', 'Torneo finalizado sin participantes.');
+        }
+
+        $transaction->commit();
+    } catch (\Exception $e) {
+        $transaction->rollBack();
+        Yii::$app->session->setFlash('error', 'Error al finalizar: ' . $e->getMessage());
+    }
+
+    return $this->redirect(['view', 'id' => $id]);
+}
 
     /**
      * Crear Torneo (Acceso libre por el Hack de behaviors)

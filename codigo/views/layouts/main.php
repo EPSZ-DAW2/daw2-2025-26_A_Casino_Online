@@ -45,8 +45,8 @@ $identity = Yii::$app->user->identity;
             ['label' => '🏠 Inicio', 'url' => ['/site/index']],
             // Enlaces placeholder para G3 y G4 (NO TOCAR)
             ['label' => '🎰 Sala de Juegos', 'url' => ['/juego/lobby'], 'linkOptions' => ['class' => 'text-warning']], 
-            ['label' => '🎲 Gestión (Solo Croupier)', 'url' => ['/juego/index'], 'visible' => $identity->puedeGestionarJuegos()],
-            ['label' => '🏆 Torneos', 'url' => '#'],
+            ['label' => '🎲 Gestión (Solo Croupier)', 'url' => ['/juego/index'], 'visible' => !Yii::$app->user->isGuest && $identity->puedeGestionarJuegos()],
+            ['label' => '🏆 Torneos', 'url' => ['/torneo/index']],
         ];
 
         // --- MENÚS DE GESTIÓN (VISIBILIDAD POR ROLES) ---

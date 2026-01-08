@@ -12,103 +12,132 @@ $this->title = $model->titulo;
 ?>
 <div class="torneo-view container">
 
-    <div class="jumbotron text-center bg-dark text-white p-4 mb-4 rounded shadow">
+    <div class="jumbotron text-center bg-dark text-white p-5 mb-4 rounded shadow" style="background: linear-gradient(135deg, #1f1c2c 0%, #928DAB 100%);">
         <h1 class="display-4 font-weight-bold"><?= Html::encode($this->title) ?></h1>
         
-        <p class="lead">
-            Juego: <strong class="text-info"><?= $model->juego ? $model->juego->nombre : 'Varios' ?></strong> | 
-            Premio: <span class="text-warning font-weight-bold display-5"><?= number_format($model->bolsa_premios, 0) ?> €</span>
+        <p class="lead mt-3">
+            Juego: <strong class="text-info"><?= $model->juegoAsociado ? Html::encode($model->juegoAsociado->nombre) : 'Varios' ?></strong> 
+            <span class="mx-3">|</span> 
+            Bote de Premios: <span class="text-warning font-weight-bold" style="font-size: 1.5em;"><?= number_format($model->bolsa_premios, 0) ?> €</span>
         </p>
         
-        <div class="my-3">
-            <?php if($model->estado === 'Abierto'): ?>
-                <span class="badge badge-success p-2" style="font-size: 1rem;">Inscripciones Abiertas</span>
-                
-                <div class="mt-4">
-                    <?= Html::a('⚠ Cancelar Torneo y Devolver Dinero', 
-                        ['cancelar', 'id' => $model->id], 
+        <div class="my-4">
+            <?php 
+            $yaInscrito = false;
+            // Solo comprobamos si el usuario está logueado
+            if (!Yii::$app->user->isGuest) {
+                $yaInscrito = \app\models\ParticipacionTorneo::find()
+                    ->where(['id_torneo' => $model->id, 'id_usuario' => Yii::$app->user->id])
+                    ->exists();
+            }
+            ?>
+
+            <?php if ($yaInscrito && ($model->estado === 'Abierto' || $model->estado === 'En Curso')): ?>
+                <div class="alert alert-success d-inline-block px-5 py-3 shadow">
+                    <h4 class="alert-heading">✅ ¡Ya estás dentro!</h4>
+                    <p class="mb-3">El torneo está activo. Juega ahora para subir en el ranking.</p>
+                    
+                    <?= Html::a('🎮 JUGAR AHORA Y SUMAR PUNTOS', 
+                        ['/juego/jugar', 'id' => $model->id_juego_asociado, 'id_torneo' => $model->id], 
                         [
-                            'class' => 'btn btn-outline-danger font-weight-bold',
-                            'data' => [
-                                'confirm' => '¿ESTÁS SEGURO? Se cancelará el torneo y se devolverá el dinero a TODOS los inscritos automáticamente. Esta acción no se puede deshacer.',
-                                'method' => 'post',
-                            ],
+                            'class' => 'btn btn-lg btn-success font-weight-bold pulse-button',
+                            'style' => 'font-size: 1.5rem; padding: 15px 40px; border-radius: 50px;'
                         ]
                     ) ?>
                 </div>
 
-            <?php elseif($model->estado === 'En Curso'): ?>
-                <span class="badge badge-danger p-2" style="font-size: 1rem;">🔴 EN JUEGO - EN VIVO</span>
-            
-            <?php elseif($model->estado === 'Cancelado'): ?>
-                <div class="alert alert-danger mt-3 font-weight-bold d-inline-block">
-                    ⛔ TORNEO CANCELADO (Dinero devuelto)
-                </div>
+            <?php elseif ($model->estado === 'Abierto' || $model->estado === 'En Curso'): ?>
+                <span class="badge bg-success p-2 mb-3" style="font-size: 1rem;">Inscripciones Abiertas</span>
+                <br>
+                <?php if (!Yii::$app->user->isGuest): ?>
+                    <?= Html::a('🎟️ Pagar Entrada (' . $model->coste_entrada . '€) y Unirse', 
+                        ['unirse', 'id' => $model->id], 
+                        [
+                            'class' => 'btn btn-primary btn-lg shadow',
+                            'data' => [
+                                'confirm' => '¿Confirmas el pago de ' . $model->coste_entrada . '€ de tu monedero para entrar al torneo?',
+                                'method' => 'post',
+                            ],
+                        ]
+                    ) ?>
+                <?php else: ?>
+                    <?= Html::a('Inicia Sesión para Participar', ['/site/login'], ['class' => 'btn btn-outline-light']) ?>
+                <?php endif; ?>
 
             <?php else: ?>
-                <span class="badge badge-secondary p-2" style="font-size: 1rem;"><?= $model->estado ?></span>
+                <div class="alert alert-secondary d-inline-block">
+                    Este torneo está <strong><?= strtoupper($model->estado) ?></strong>. No admite más jugadas.
+                </div>
             <?php endif; ?>
+
+            
+            <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin()): ?>
+                <hr class="border-light mt-4">
+                <div class="btn-group">
+                    <?= Html::a('✏ Editar', ['update', 'id' => $model->id], ['class' => 'btn btn-outline-light btn-sm']) ?>
+                    <?php if ($model->estado !== 'Cancelado' && $model->estado !== 'Finalizado'): ?>
+                        <?= Html::a('🛑 Finalizar Torneo', ['finalizar', 'id' => $model->id], [
+                            'class' => 'btn btn-warning btn-sm',
+                            'data' => ['confirm' => '¿Seguro que quieres cerrar el torneo y repartir premios?', 'method' => 'post']
+                        ]) ?>
+                        <?= Html::a('⚠ Cancelar y Devolver Dinero', ['cancelar', 'id' => $model->id], [
+                            'class' => 'btn btn-danger btn-sm',
+                            'data' => ['confirm' => '¿CANCELAR TORNEO? Se devolverá el dinero a todos.', 'method' => 'post']
+                        ]) ?>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
         </div>
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom-0">
-            <h3 class="mb-0 text-primary">🏆 Clasificación Actual</h3>
-        </div>
-        
-        <div class="card-body p-0">
-            <?php if (count($participantes) > 0): ?>
-                <div class="table-responsive">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h3 class="text-center mb-4 border-bottom pb-2">🏆 Clasificación en Tiempo Real</h3>
+            
+            <?php if (!empty($participantes)): ?>
+                <div class="table-responsive shadow-sm rounded">
                     <table class="table table-hover table-striped mb-0">
-                        <thead class="thead-light">
+                        <thead class="bg-primary text-white">
                             <tr>
-                                <th scope="col" width="10%" class="text-center">Pos</th>
+                                <th scope="col" class="text-center">#</th>
                                 <th scope="col">Jugador</th>
-                                <th scope="col" class="text-right pr-4">Puntos</th>
+                                <th scope="col" class="text-end">Puntuación</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php 
                             $posicion = 1;
+                            // Ordenamos los participantes por puntuación descendente
+                            usort($participantes, function($a, $b) {
+                                return $b->puntuacion_actual <=> $a->puntuacion_actual;
+                            });
+
                             foreach ($participantes as $participacion): 
-                                // Lógica para iconos de medallas
-                                $medalla = '<span class="badge badge-secondary badge-pill">' . $posicion . '</span>';
+                                // Estilos para el podio (1º Oro, 2º Plata, 3º Bronce)
+                                $medalla = '';
                                 $claseFila = '';
-                                
-                                if ($posicion == 1) {
-                                    $medalla = '🥇';
-                                    $claseFila = 'table-warning font-weight-bold';
-                                } elseif ($posicion == 2) {
-                                    $medalla = '🥈';
-                                } elseif ($posicion == 3) {
-                                    $medalla = '🥉';
-                                }
+                                if ($posicion == 1) { $medalla = '🥇'; $claseFila = 'table-warning font-weight-bold'; }
+                                elseif ($posicion == 2) { $medalla = '🥈'; }
+                                elseif ($posicion == 3) { $medalla = '🥉'; }
                             ?>
                                 <tr class="<?= $claseFila ?>">
-                                    <td class="align-middle h4 text-center"><?= $medalla ?></td>
+                                    <td class="text-center align-middle h5"><?= $posicion == 1 ? $medalla : $posicion ?></td>
                                     <td class="align-middle">
-                                        <?php 
-                                            $nombreAvatar = $participacion->usuario->avatar_url;
-                                                                
-                                            // 1. Si no tiene avatar o el campo está vacío, usamos uno por defecto
-                                            if (empty($nombreAvatar)) {
-                                                $nombreAvatar = 'default.png'; 
-                                            }
-                                        
-                                            // 2. Construimos la ruta
-                                            $rutaAvatar = Url::to('@web/img/' . $nombreAvatar);
-                                        ?>
-                                        <img src="<?= $rutaAvatar ?>" 
-                                             alt="👤" 
-                                             class="rounded-circle mr-2 shadow-sm" 
-                                             style="width: 40px; height: 40px; object-fit: cover; background-color: #eee;">
-
-                                        <span style="font-size: 1.1rem;">
-                                            <?= Html::encode($participacion->usuario->nick) ?>
-                                        </span>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center mr-3" style="width: 40px; height: 40px; margin-right:10px;">
+                                                <?= strtoupper(substr($participacion->usuario->nick, 0, 1)) ?>
+                                            </div>
+                                            <span style="font-size: 1.1rem;">
+                                                <?= Html::encode($participacion->usuario->nick) ?>
+                                            </span>
+                                            <?php if ($posicion == 1): ?>
+                                                <span class="badge bg-danger ms-2" style="font-size: 0.7em;">LÍDER</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
-                                    <td class="text-right align-middle h5 text-primary pr-4">
-                                        <?= number_format($participacion->puntuacion_actual, 0) ?> pts
+                                    <td class="text-end align-middle h5 text-primary pr-4">
+                                        <?= number_format($participacion->puntuacion_actual, 0, ',', '.') ?> pts
                                     </td>
                                 </tr>
                             <?php 
@@ -119,16 +148,27 @@ $this->title = $model->titulo;
                     </table>
                 </div>
             <?php else: ?>
-                <div class="alert alert-info text-center m-4">
+                <div class="alert alert-info text-center m-4 p-5 shadow-sm">
                     <h4>Aún no hay valientes inscritos en este torneo.</h4>
-                    <p>¡Sé el primero en participar!</p>
+                    <p class="mb-0">¡Sé el primero en participar y lidera la tabla!</p>
                 </div>
             <?php endif; ?>
         </div>
     </div>
     
-    <div class="mt-4 mb-5">
-        <?= Html::a('⬅ Volver al Listado', ['index'], ['class' => 'btn btn-secondary']) ?>
+    <div class="mt-5 mb-5 text-center">
+        <?= Html::a('⬅ Volver al Listado de Torneos', ['index'], ['class' => 'btn btn-secondary']) ?>
     </div>
 
 </div>
+
+<style>
+@keyframes pulse {
+	0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+	70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+	100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+.pulse-button {
+	animation: pulse 2s infinite;
+}
+</style>

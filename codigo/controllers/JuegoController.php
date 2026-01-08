@@ -220,6 +220,37 @@ class JuegoController extends Controller
         ]);
     }
 
+/**
+ * Busca si hay un torneo activo y suma puntos.
+ * Protegida contra errores si no encuentra el usuario o torneo.
+ */
+protected function actualizarRankingTorneo($idJuego, $gananciaObtenida)
+{
+    // Si no ganó nada o es negativo, salimos
+    if ($gananciaObtenida <= 0) return;
+
+    $usuarioId = Yii::$app->user->id;
+    if (!$usuarioId) return; // Por si acaso se perdió la sesión
+
+    // Buscar participación en torneos Activos O Abiertos
+    $participacion = \app\models\ParticipacionTorneo::find()
+        ->alias('p')
+        ->joinWith('torneo t')
+        ->where(['t.id_juego_asociado' => $idJuego])
+        ->andWhere(['in', 't.estado', ['En Curso', 'Abierto']]) // Aceptamos ambos estados
+        ->andWhere(['p.id_usuario' => $usuarioId])
+        ->one();
+
+    if ($participacion) {
+        // 1€ = 1000 Puntos
+        $puntosGanados = (int)($gananciaObtenida * 1000);
+        
+        // Sumar y Guardar
+        $participacion->puntuacion_actual += $puntosGanados;
+        $participacion->save(false); // false para saltar validaciones estrictas y evitar fallos
+    }
+}
+
     /**
      * Juego del slot la tragamonedas
      * Se llama mediante AJAX desde la vista 'jugar.php'.
@@ -281,14 +312,22 @@ class JuegoController extends Controller
             $monedero->saldo_real += $ganancia;
         }
 
-        // Guardamos el nuevo saldo en la BD
         $monedero->save();
+
+        // --- CORRECCIÓN CLAVE ---
+        $gananciaFinal = isset($ganancia) ? $ganancia : 0;
+
+        try {
+            $this->actualizarRankingTorneo($id, $gananciaFinal); 
+        } catch (\Exception $e) {
+            Yii::error("Error torneo slot: " . $e->getMessage());
+        }
 
         // 7. Devolvemos el resultado al juego (JS)
         return [
             'success' => true,
-            'rodillos' => $resultado, // Ej: ['🍒', '💎', '🍒']
-            'premio' => $ganancia,
+            'rodillos' => $resultado, 
+            'premio' => $gananciaFinal,
             'nuevoSaldo' => $monedero->saldo_real,
             'esVictoria' => $esVictoria
         ];
@@ -379,17 +418,33 @@ class JuegoController extends Controller
         if ($esVictoria) {
             $monedero->saldo_real += $ganancia;
         }
-        $monedero->save();
+        
+        // Guardamos el monedero
+        if (!$monedero->save()) {
+             return ['success' => false, 'mensaje' => 'Error al actualizar saldo en BD.'];
+        }
 
-        // 7. Devolver resultado (añadimos la cantidad para feedback visual)
+        // --- CORRECCIÓN CLAVE ---
+        // Verificamos que $ganancia esté definida. Si no ganó, es 0.
+        $gananciaFinal = isset($ganancia) ? $ganancia : 0;
+        
+        // Intentamos actualizar el torneo, capturando errores para que no salga "Error de Conexión"
+        try {
+            $this->actualizarRankingTorneo($id, $gananciaFinal);
+        } catch (\Exception $e) {
+            // Si falla el torneo, no detenemos el juego, solo lo registramos en el log interno
+            Yii::error("Error actualizando torneo: " . $e->getMessage());
+        }
+
+        // 7. Devolver resultado
         return [
             'success' => true,
             'numero' => $numeroGanador,
             'color' => $colorGanador,
-            'nuevoSaldo' => $monedero->saldo_real,
+            'nuevoSaldo' => $monedero->saldo_real, // Importante: Saldo actualizado
             'esVictoria' => $esVictoria,
-            'premio' => $ganancia,
-            'apuesta' => $cantidadApuesta // Devolvemos el dato para mostrarlo
+            'premio' => $gananciaFinal,
+            'apuesta' => $cantidadApuesta 
         ];
     }
 
@@ -567,12 +622,21 @@ class JuegoController extends Controller
         $usuario = Yii::$app->user->identity;
         $monedero = $usuario->monedero;
         
+        // CORREGIDO: Declaramos la ganancia total
+        $gananciaTotal = 0;
+        
         if ($victoria) {
+            // Calculamos la ganancia neta (lo que gana aparte de recuperar su apuesta)
+            $gananciaTotal = $apuesta; 
             $monedero->saldo_real += ($apuesta * 2); // Devuelve apuesta + ganancia
         } elseif ($empate) {
+            $gananciaTotal = 0; // En empate no gana nada, solo recupera
             $monedero->saldo_real += $apuesta; // Devuelve apuesta
         }
         $monedero->save();
+
+        // NUEVO: Actualizar Torneo si aplica
+        $this->actualizarRankingTorneo($juegoId, $gananciaTotal);
 
         return [
             'success' => true,
@@ -584,4 +648,5 @@ class JuegoController extends Controller
             'nuevoSaldo' => $monedero->saldo_real
         ];
     }
+
 }
