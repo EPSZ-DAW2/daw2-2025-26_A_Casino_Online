@@ -10,7 +10,7 @@ $this->title = 'Torneos y Competición';
         <h1 class="display-4">Torneos y Competición 🏆</h1>
         <p class="lead">Demuestra tu habilidad y gana grandes premios</p>
         
-        <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin()): ?>
+        <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->puedeGestionarUsuarios()): ?>
             <p>
                 <?= Html::a('➕ Crear Nuevo Torneo', ['create'], ['class' => 'btn btn-success btn-lg shadow']) ?>
             </p>
@@ -64,7 +64,7 @@ $this->title = 'Torneos y Competición';
                         <?= Html::a('Ver Ranking y Detalles', ['view', 'id' => $torneo->id], ['class' => 'btn btn-outline-primary w-100 rounded-pill']) ?>
                     </div>
 
-                    <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->esAdmin()): ?>
+                    <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->puedeGestionarUsuarios()): ?>
                         <div class="card-footer bg-white border-top text-center">
                             <div class="btn-group w-100" role="group">
                                 <?= Html::a('✏ Editar', ['update', 'id' => $torneo->id], [

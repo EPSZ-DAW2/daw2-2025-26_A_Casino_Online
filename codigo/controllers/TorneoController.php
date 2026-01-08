@@ -40,7 +40,7 @@ class TorneoController extends Controller
                         'allow' => true,
                         'roles' => ['@'], // Usuario logueado
                         'matchCallback' => function ($rule, $action) {
-                            return Yii::$app->user->identity->esAdmin();
+                            return Yii::$app->user->identity->puedeGestionarUsuarios();
                         }
                     ],
                 ],
@@ -235,7 +235,7 @@ public function actionUnirse($id)
     public function actionFinalizar($id)
 {
     // Solo admin puede forzar finalizar (o mediante CronJob)
-    if (!Yii::$app->user->identity->esAdmin()) return $this->redirect(['index']);
+    if (!Yii::$app->user->identity->puedeGestionarUsuarios()) return $this->redirect(['index']);
 
     $torneo = $this->findModel($id);
     
