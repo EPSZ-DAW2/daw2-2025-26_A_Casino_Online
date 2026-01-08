@@ -85,6 +85,11 @@ $identity = Yii::$app->user->identity;
                 ];
             }
 
+            // GESTIÓN DE LOGROS (G6)
+            if ($identity->esAdmin() || $identity->esSuperAdmin()) {
+                $menuItems[] = ['label' => '🏆 LOGROS', 'url' => ['/logro/index'], 'linkOptions' => ['class' => 'text-warning fw-bold']];
+            }
+
             // GESTIÓN FINANCIERA (G2)
             if ($identity->puedeGestionarDinero()) {
                 $menuItems[] = ['label' => '💰 PAGOS', 'url' => ['/transaccion/index'], 'linkOptions' => ['class' => 'text-info fw-bold']];

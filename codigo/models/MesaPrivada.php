@@ -21,9 +21,10 @@ use yii\db\ActiveRecord;
 class MesaPrivada extends ActiveRecord
 {
     // Constantes para estados de mesa facilitar control en lógica
-    const ESTADO_ABIERTA = 'Abierta';
-    const ESTADO_JUGANDO = 'Jugando';
-    const ESTADO_CERRADA = 'Cerrada';
+    // Constantes para definir el estado de la mesa (Lógica de Negocio G6)
+    const ESTADO_ABIERTA = 'Abierta'; // Se puede entrar
+    const ESTADO_JUGANDO = 'Jugando'; // Partida en curso
+    const ESTADO_CERRADA = 'Cerrada'; // Ya no existe o finalizó
 
     /**
      * {@inheritdoc}
@@ -34,25 +35,20 @@ class MesaPrivada extends ActiveRecord
     }
 
     /**
-     * Reglas de validación.
-     * {@inheritdoc}
+     * Reglas de validación Yii2
+     * Define qué datos son obligatorios y sus formatos.
      */
     public function rules()
     {
         return [
-            // El anfitrión es obligatorio
-            [['id_anfitrion'], 'required'],
+            [['id_anfitrion', 'tipo_juego'], 'required', 'message' => 'El anfitrión y el tipo de juego son obligatorios.'],
             [['id_anfitrion'], 'integer'],
-
-            // Campos de texto
+            // Enumerado para asegurar consistencia en la base de datos
+            [['estado_mesa'], 'in', 'range' => [self::ESTADO_ABIERTA, self::ESTADO_JUGANDO, self::ESTADO_CERRADA]],
             [['tipo_juego'], 'string', 'max' => 50],
+            // La contraseña es opcional, pero si se pone, máx 255 chars
             [['contrasena_acceso'], 'string', 'max' => 255],
-
-            // Estado con rango definido (Enum en base de datos)
-            [['estado_mesa'], 'string'],
-            ['estado_mesa', 'in', 'range' => [self::ESTADO_ABIERTA, self::ESTADO_JUGANDO, self::ESTADO_CERRADA]],
-
-            // Validar que el anfitrión exista
+            // Verifica que el anfitrión exista en la tabla Usuarios (Integridad Referencial)
             [['id_anfitrion'], 'exist', 'skipOnError' => true, 'targetClass' => Usuario::class, 'targetAttribute' => ['id_anfitrion' => 'id']],
         ];
     }
@@ -91,14 +87,18 @@ class MesaPrivada extends ActiveRecord
     }
 
     /**
-     * Método helper para verificar la contraseña de entrada.
-     * @param string $passwordIntento La contraseña que escribe el usuario invitado.
-     * @return bool True si coincide, False si no.
+     * Validación de Contraseña de Sala (G6)
+     * Compara la contraseña introducida por el invitado con la almacenada.
+     * @param string $passwordIntento La contraseña que escribe el usuario
+     * @return bool True si es correcta o si la mesa es pública (sin pass)
      */
     public function validarContrasena($passwordIntento)
     {
-        // En este prototipo usamos comparación directa. 
-        // Si se cifrara la contraseña de la mesa, aquí usaríamos Yii::$app->security->validatePassword
+        // Si la mesa no tiene contraseña, cualquiera entra
+        if (empty($this->contrasena_acceso)) {
+            return true;
+        }
+        // Comparación directa (MVP)
         return $this->contrasena_acceso === $passwordIntento;
     }
 }

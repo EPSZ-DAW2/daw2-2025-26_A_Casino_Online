@@ -44,7 +44,6 @@ class AfiliadoController extends Controller
         // Verificar si tiene código propio, si no, generarlo
         if (empty($usuario->codigo_referido_propio)) {
             $usuario->codigo_referido_propio = $this->generarCodigoUnico($usuario->id);
-            // Guardamos sin validar todo el modelo para evitar errores de otros campos G1
             $usuario->save(false, ['codigo_referido_propio']);
         }
 
