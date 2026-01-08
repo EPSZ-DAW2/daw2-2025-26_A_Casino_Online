@@ -61,8 +61,7 @@ class TorneoController extends Controller
      */
     public function actionIndex()
     {
-        // Actualización automática de estados de torneos activos
-        $torneosActivos = \app\models\Torneo::find()
+        $torneosActivos = Torneo::find()
             ->where(['!=', 'estado', 'Cancelado'])
             ->andWhere(['!=', 'estado', 'Finalizado'])
             ->all();
@@ -97,7 +96,7 @@ class TorneoController extends Controller
         // --- MODO TORNEO ---
         if ($id_torneo !== null) {
             // Verificar estado del torneo
-            $torneo = \app\models\Torneo::findOne($id_torneo);
+            $torneo = Torneo::findOne($id_torneo);
 
             if (!$torneo) {
                 return $this->redirect(['lobby']);
@@ -169,7 +168,7 @@ class TorneoController extends Controller
         $monedero = $usuario->monedero;
 
         if (!$monedero) {
-            $monedero = new \app\models\Monedero();
+            $monedero = new Monedero();
             $monedero->id_usuario = $usuario->id;
             $monedero->saldo_real = 0.00;
             $monedero->saldo_bono = 0.00;
@@ -188,7 +187,7 @@ class TorneoController extends Controller
         }
 
         // 2. Comprobar si ya está inscrito
-        $yaInscrito = \app\models\ParticipacionTorneo::find()
+        $yaInscrito = ParticipacionTorneo::find()
             ->where(['id_torneo' => $id, 'id_usuario' => $usuario->id])
             ->exists();
 
@@ -220,7 +219,7 @@ class TorneoController extends Controller
                 throw new \Exception("Error al actualizar monedero.");
 
             // B. Crear participación
-            $participacion = new \app\models\ParticipacionTorneo();
+            $participacion = new ParticipacionTorneo();
             $participacion->id_torneo = $id;
             $participacion->id_usuario = $usuario->id;
             $participacion->puntuacion_actual = 0;
@@ -228,7 +227,7 @@ class TorneoController extends Controller
                 throw new \Exception("Error al crear participación.");
 
             // C. Crear registro de transacción
-            $trans = new \app\models\Transaccion();
+            $trans = new Transaccion();
             $trans->id_usuario = $usuario->id;
             $trans->tipo_operacion = 'Apuesta';
             $trans->cantidad = $coste;
@@ -270,7 +269,7 @@ class TorneoController extends Controller
         }
 
         // Buscar al ganador (El que tenga más puntuacion_actual)
-        $ganadorParticipacion = \app\models\ParticipacionTorneo::find()
+        $ganadorParticipacion = ParticipacionTorneo::find()
             ->where(['id_torneo' => $id])
             ->orderBy(['puntuacion_actual' => SORT_DESC])
             ->one();
@@ -285,7 +284,7 @@ class TorneoController extends Controller
                 $premio = $torneo->bolsa_premios;
 
                 // Actualizar monedero del ganador
-                $monederoGanador = \app\models\Monedero::findOne(['id_usuario' => $ganadorParticipacion->id_usuario]);
+                $monederoGanador = Monedero::findOne(['id_usuario' => $ganadorParticipacion->id_usuario]);
                 $monederoGanador->saldo_real += $premio;
                 $monederoGanador->save();
 
@@ -295,7 +294,7 @@ class TorneoController extends Controller
                 $ganadorParticipacion->save();
 
                 // Crear transacción de premio
-                $trans = new \app\models\Transaccion();
+                $trans = new Transaccion();
                 $trans->id_usuario = $ganadorParticipacion->id_usuario;
                 $trans->tipo_operacion = 'Premio';
                 $trans->cantidad = $premio;
@@ -393,11 +392,11 @@ class TorneoController extends Controller
                 throw new \Exception("Error al guardar estado del torneo.");
 
             // 2. Devolver dinero a los participantes
-            $participantes = \app\models\ParticipacionTorneo::find()->where(['id_torneo' => $id])->all();
+            $participantes = ParticipacionTorneo::find()->where(['id_torneo' => $id])->all();
             $contadorReembolsos = 0;
 
             foreach ($participantes as $participacion) {
-                $monedero = \app\models\Monedero::findOne(['id_usuario' => $participacion->id_usuario]);
+                $monedero = Monedero::findOne(['id_usuario' => $participacion->id_usuario]);
 
                 if ($monedero && $torneo->coste_entrada > 0) {
                     // A. Devolvemos el saldo
@@ -405,7 +404,7 @@ class TorneoController extends Controller
                     $monedero->save();
 
                     // B. Creamos registro de transacción (IMPORTANTE para el historial)
-                    $trans = new \app\models\Transaccion();
+                    $trans = new Transaccion();
                     $trans->id_usuario = $participacion->id_usuario;
                     $trans->tipo_operacion = 'Premio'; // O 'Deposito', usamos Premio para que sume positivo
                     $trans->categoria = 'Torneo';

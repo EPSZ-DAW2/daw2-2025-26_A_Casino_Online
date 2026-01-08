@@ -192,10 +192,16 @@ class JuegoController extends Controller
 
         // --- SEGURIDAD: SI ESTÁ EN MANTENIMIENTO O DESACTIVADO, EXPULSAR ---
         if ($model->en_mantenimiento == 1 || $model->activo == 0) {
-
             Yii::$app->session->setFlash('error', 'El juego "' . $model->nombre . '" está en mantenimiento.');
             return $this->redirect(['lobby']);
         }
+
+        // --- ACCESO: Solo usuarios logueados pueden jugar ---
+        if (Yii::$app->user->isGuest) {
+            Yii::$app->session->setFlash('error', 'Debes iniciar sesión para jugar.');
+            return $this->redirect(['/site/login']);
+        }
+
         // --- MODO TORNEO ---
         if ($id_torneo !== null) {
             // Si venimos de un torneo, NO comprobamos saldo real, porque ya pagó la entrada.
