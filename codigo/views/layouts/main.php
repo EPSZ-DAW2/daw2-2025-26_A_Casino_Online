@@ -27,6 +27,25 @@ $identity = Yii::$app->user->identity;
 <head>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
+    <style>
+        /* FIX RESPONSIVE MENU: Evitar que el menú tape contenido sin poder hacer scroll */
+        @media (max-width: 991.98px) {
+
+            /* Aumentado a 991px (lg) porque hay muchos items y se rompe en md */
+            .navbar-collapse {
+                max-height: 95vh;
+                /* Aumentado para aprovechar más pantalla */
+                overflow-y: auto;
+                /* Scroll interno si es muy alto */
+                background-color: #212529;
+                /* Fondo oscuro opaco */
+                padding: 10px;
+                border-radius: 0 0 10px 10px;
+                border-top: 1px solid #444;
+                /* Separador sutil */
+            }
+        }
+    </style>
 </head>
 
 <body class="d-flex flex-column h-100">
@@ -37,7 +56,7 @@ $identity = Yii::$app->user->identity;
         NavBar::begin([
             'brandLabel' => '🎰 ROYAL CASINO',
             'brandUrl' => Yii::$app->homeUrl,
-            'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top shadow'],
+            'options' => ['class' => 'navbar-expand-lg navbar-dark bg-dark fixed-top shadow'], // Cambiado a lg
         ]);
 
         // --- MENÚ IZQUIERDO (Navegación Principal) ---
