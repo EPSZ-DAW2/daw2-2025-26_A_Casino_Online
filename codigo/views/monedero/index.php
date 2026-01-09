@@ -153,8 +153,13 @@ $this->title = 'Mi Monedero Virtual';
                         'attribute' => 'estado',
                         'format' => 'raw',
                         'value' => function ($model) {
-                                        // Badge de colores: verde para completado, naranja para pendiente (G2)
-                                        $class = $model->estado == 'Completado' ? 'success' : 'warning';
+                                        // Badge de colores: verde (success), rojo (danger) o amarillo (warning)
+                                        $class = 'warning'; // Por defecto pendiente
+                                        if ($model->estado == 'Completado')
+                                            $class = 'success';
+                                        if ($model->estado == 'Rechazado')
+                                            $class = 'danger';
+
                                         return "<span class='badge bg-$class'>$model->estado</span>";
                                     }
                     ],
