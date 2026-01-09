@@ -68,49 +68,105 @@ $this->registerCss("
 
                 <!-- Historial de Mensajes -->
                 <div class="card-body chat-container" id="chat-box">
-                    <?php if (empty($mensajes)): ?>
-                        <div class="text-center text-muted mt-5"><i>Inicia la conversación...</i></div>
-                    <?php else: ?>
-                        <?php foreach ($mensajes as $msg): ?>
-                            <?php
-                            $isMine = ($msg->id_usuario === Yii::$app->user->id);
-                            $class = $isMine ? 'chat-mine' : 'chat-other';
-                            $sender = $isMine ? 'Tú' : $msg->usuario->nick;
-                            ?>
-                            <div class="chat-message <?= $class ?>">
-                                <small class="fw-bold">
-                                    <?= Html::encode($sender) ?>
-                                </small><br>
-                                <?= Html::encode($msg->mensaje) ?>
-                                <div style="font-size:0.7em; color:#666">
-                                    <?= Yii::$app->formatter->asTime($msg->fecha_envio, 'short') ?>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                    <!-- Los mensajes se cargarán vía JS -->
                 </div>
 
                 <!-- Input para enviar -->
                 <div class="card-footer">
-                    <?php $form = ActiveForm::begin(['options' => ['class' => 'd-flex']]); ?>
-                    <?= $form->field($chatModel, 'mensaje')->textInput([
-                        'placeholder' => 'Escribe aquí...',
-                        'class' => 'form-control me-2',
-                        'autocomplete' => 'off'
-                    ])->label(false) ?>
-
-                    <?= Html::submitButton('<i class="bi bi-send-fill"></i>', ['class' => 'btn btn-primary']) ?>
-                    <?php ActiveForm::end(); ?>
+                    <form id="chat-form" class="d-flex" onsubmit="enviarMensaje(event)">
+                        <input type="text" id="mensaje-input" class="form-control me-2" placeholder="Escribe aquí..."
+                            autocomplete="off">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill"></i></button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Script para bajar el scroll del chat automáticamente -->
-<?php
-$this->registerJs('
-    var chatBox = document.getElementById("chat-box");
-    chatBox.scrollTop = chatBox.scrollHeight;
-');
-?>
+<!-- Script para el Chat AJAX (G6) -->
+<script>
+    const mesaId = <?= $mesa->id ?>;
+    let lastMessageId = 0;
+    const chatBox = document.getElementById("chat-box");
+
+    // Función: Cargar mensajes nuevos
+    function cargarMensajes() {
+        console.log('Poll');
+        fetch(`index.php?r=mesa-privada/get-mensajes&id=${mesaId}&lastId=${lastMessageId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    let hayNuevos = false;
+                    data.forEach(msg => {
+                        // Actualizamos el último ID conocido
+                        if (msg.id > lastMessageId) {
+                            lastMessageId = msg.id;
+                            hayNuevos = true;
+                            appendMessage(msg);
+                        }
+                    });
+
+                    if (hayNuevos) scrollToBottom();
+                }
+            })
+            .catch(error => console.error('Error polling:', error));
+    }
+
+    // Función: Pintar un mensaje en el chat
+    function appendMessage(msg) {
+        const div = document.createElement('div');
+        const clase = msg.es_mio ? 'chat-mine' : 'chat-other';
+        const sender = msg.es_mio ? 'Tú' : msg.autor;
+
+        div.className = `chat-message ${clase}`;
+        div.innerHTML = `
+            <small class="fw-bold">${sender}</small><br>
+            ${msg.contenido}
+            <div style="font-size:0.7em; color:#666">${msg.hora}</div>
+        `;
+        chatBox.appendChild(div);
+    }
+
+    // Función: Enviar mensaje
+    function enviarMensaje(e) {
+        e.preventDefault();
+        const input = document.getElementById('mensaje-input');
+        const contenido = input.value.trim();
+
+        if (!contenido) return;
+
+        // Limpiamos input inmediatamente para UX rápida
+        input.value = '';
+
+        const formData = new FormData();
+        formData.append('contenido', contenido);
+        formData.append('<?= Yii::$app->request->csrfParam ?>', '<?= Yii::$app->request->getCsrfToken() ?>');
+
+        fetch(`index.php?r=mesa-privada/enviar-mensaje&id=${mesaId}`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Forzamos carga inmediata para ver mi propio mensaje
+                    cargarMensajes();
+                } else {
+                    alert('Error al enviar mensaje');
+                }
+            })
+            .catch(error => console.error('Error enviando:', error));
+    }
+
+    // Scroll al fondo
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Polling cada 2 segundos
+    setInterval(cargarMensajes, 2000);
+
+    // Carga inicial
+    cargarMensajes();
+</script>

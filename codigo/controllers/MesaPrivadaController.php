@@ -170,6 +170,60 @@ class MesaPrivadaController extends Controller
     }
 
     /**
+     * AJAX (G6): Obtener mensajes nuevos.
+     * @param int $id ID de la mesa
+     * @param int $lastId ID del último mensaje que tiene el cliente
+     */
+    public function actionGetMensajes($id, $lastId = 0)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $mensajes = MensajeChat::find()
+            ->where(['id_mesa' => $id])
+            ->andWhere(['>', 'id', $lastId])
+            ->orderBy(['fecha_envio' => SORT_ASC])
+            ->all();
+
+        $data = [];
+        foreach ($mensajes as $msg) {
+            $data[] = [
+                'id' => $msg->id,
+                'autor' => $msg->usuario->nick,
+                'contenido' => \yii\helpers\Html::encode($msg->mensaje), // Corregido el nombre de propiedad
+                'hora' => Yii::$app->formatter->asTime($msg->fecha_envio, 'short'),
+                'es_mio' => ($msg->id_usuario == Yii::$app->user->id)
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * AJAX (G6): Enviar mensaje sin recarga.
+     */
+    public function actionEnviarMensaje($id)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $model = new MensajeChat();
+        $model->id_mesa = $id;
+        $model->id_usuario = Yii::$app->user->id;
+
+        if ($this->request->isPost) {
+            // El JS envía 'contenido' pero el modelo espera 'mensaje'
+            $contenido = $this->request->post('contenido');
+            $model->mensaje = $contenido;
+
+            if ($model->save()) {
+                return ['success' => true];
+            } else {
+                return ['success' => false, 'errors' => $model->errors];
+            }
+        }
+        return ['success' => false, 'error' => 'Petición inválida'];
+    }
+
+    /**
      * Helper: Buscar modelo
      */
     protected function findModel($id)
