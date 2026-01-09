@@ -44,7 +44,8 @@ $identity = Yii::$app->user->identity;
         $menuItems = [
             ['label' => '🏠 Inicio', 'url' => ['/site/index']],
             // Enlaces placeholder para G3 y G4 (NO TOCAR)
-            ['label' => '🎰 Sala de Juegos', 'url' => ['/juego/lobby'], 'linkOptions' => ['class' => 'text-warning']], 
+            ['label' => '🎰 Sala de Juegos', 'url' => ['/juego/lobby'], 'linkOptions' => ['class' => 'text-warning']],
+            ['label' => '🕵️ Mesas Privadas', 'url' => ['/mesa-privada/index']],
             ['label' => '🎲 Gestión (Solo Croupier)', 'url' => ['/juego/index'], 'visible' => !Yii::$app->user->isGuest && $identity->puedeGestionarJuegos()],
             ['label' => '🏆 Torneos', 'url' => ['/torneo/index']],
         ];
@@ -62,6 +63,10 @@ $identity = Yii::$app->user->identity;
                 // Botón del Grupo 1 (Usuarios)
                 $menuItems[] = ['label' => '⚙️ USUARIOS', 'url' => ['/usuario/index'], 'linkOptions' => ['class' => 'text-danger fw-bold']];
 
+                // Logs Globales (Solicitado)
+                $menuItems[] = ['label' => '📋 LOGS GLOBALES', 'url' => ['/log-visita/index']];
+
+
                 // --- INICIO LÓGICA CONTADOR ROJO (GRUPO 5) ---
                 $badgeHTML = ''; // Empezamos con la etiqueta vacía
                 try {
@@ -75,7 +80,7 @@ $identity = Yii::$app->user->identity;
                 } catch (\Exception $e) {
                     // Si falla la base de datos, no hacemos nada
                 }
-        
+
                 // Botón del Grupo 5 (Fraude + Bolita Roja)
                 $menuItems[] = [
                     'label' => '🚨 FRAUDE' . $badgeHTML, // Añadimos la bolita al texto

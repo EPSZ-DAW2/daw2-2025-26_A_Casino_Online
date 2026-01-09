@@ -44,9 +44,12 @@ class MonederoController extends Controller
         $monedero = Monedero::findOne(['id_usuario' => $usuarioId]);
 
         // Consultamos el gasto total por categoría (Solo apuestas/gastos)
+        // [Filtro] Excluimos categorías vacías o nulas
         $gastosPorCategoria = Transaccion::find()
             ->select(['categoria', 'SUM(cantidad) as cantidad'])
             ->where(['id_usuario' => $usuarioId, 'tipo_operacion' => 'Apuesta'])
+            ->andWhere(['IS NOT', 'categoria', null])
+            ->andWhere(['!=', 'categoria', ''])
             ->groupBy('categoria')
             ->asArray()
             ->all();

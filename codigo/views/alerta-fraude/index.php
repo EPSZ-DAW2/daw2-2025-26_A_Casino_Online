@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Create Alerta Fraude', ['create'], ['class' => 'btn btn-success']) ?>
+        <?php // Botón de Crear eliminado por G5: Ahora se crea desde la lista de Usuarios (Botón Bloquear) ?>
     </p>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -27,12 +27,12 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'rowOptions' => function ($model) {
-            if ($model->nivel_riesgo == 'Alto') {
-                return ['class' => 'table-danger']; // Rojo Bootstrap
-            } elseif ($model->nivel_riesgo == 'Medio') {
-                return ['class' => 'table-warning']; // Amarillo Bootstrap
-            }
-        },
+                if ($model->nivel_riesgo == 'Alto') {
+                    return ['class' => 'table-danger']; // Rojo Bootstrap
+                } elseif ($model->nivel_riesgo == 'Medio') {
+                    return ['class' => 'table-warning']; // Amarillo Bootstrap
+                }
+            },
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
@@ -48,16 +48,24 @@ $this->params['breadcrumbs'][] = $this->title;
                 'template' => '{view} {update} {delete} {banear}', // Añadimos {banear} al template
                 'buttons' => [
                     'banear' => function ($url, $model) {
-                        return \yii\helpers\Html::a('⛔ Banear', ['banear', 'id' => $model->id], [
-                            'class' => 'btn btn-danger btn-sm',
-                            'title' => 'Bloquear cuenta de usuario permanentemente',
-                            'style' => 'margin-left: 5px;',
-                            'data' => [
-                                'confirm' => '¿Estás 100% seguro de que quieres BANEAR a este usuario?',
-                                'method' => 'post',
-                            ],
-                        ]);
-                    },
+                            // Obtenemos el usuario de la alerta (relación manual o directa)
+                            $usuario = \app\models\Usuario::findOne($model->id_usuario);
+                            $esBloqueado = $usuario && $usuario->estado_cuenta === 'Bloqueado';
+
+                            $texto = $esBloqueado ? '✅ Desbanear' : '⛔ Banear';
+                            $clase = $esBloqueado ? 'btn btn-success btn-sm' : 'btn btn-danger btn-sm';
+                            $confirm = $esBloqueado ? '¿Reactivar acceso a este usuario?' : '¿BANEAR a este usuario?';
+
+                            return Html::a($texto, ['banear', 'id' => $model->id], [
+                                'class' => $clase,
+                                'title' => 'Cambiar estado de bloqueo del usuario',
+                                'style' => 'margin-left: 5px;',
+                                'data' => [
+                                    'confirm' => $confirm,
+                                    'method' => 'post',
+                                ],
+                            ]);
+                        },
                 ],
             ],
         ],

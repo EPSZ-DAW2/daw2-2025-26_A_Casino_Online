@@ -372,4 +372,33 @@ class Usuario extends ActiveRecord implements IdentityInterface
         }
         return false;
     }
+    /**
+     * CASCADA DE BORRADO (Solicitado por Usuario):
+     * Antes de borrar un usuario, eliminamos todo lo relacionado.
+     */
+    public function beforeDelete()
+    {
+        if (parent::beforeDelete()) {
+
+            // 1. Fraudes
+            AlertaFraude::deleteAll(['id_usuario' => $this->id]);
+
+            // 2. Monedero
+            if ($this->monedero) {
+                $this->monedero->delete();
+            }
+
+            // 3. Logros (Tabla pivote 'logro_usuario')
+            // Yii no tiene modelo directo para pivote a veces, usamos SQL directo o modelo si existe.
+            // Hemos visto LogroUsuario.php en la lista de archivos, vamos a intentar usarlo o deleteAll directo.
+            // Opción segura: Command
+            Yii::$app->db->createCommand()->delete('logro_usuario', ['id_usuario' => $this->id])->execute();
+
+            // 4. Logs de visita
+            LogVisita::deleteAll(['id_usuario' => $this->id]);
+
+            return true;
+        }
+        return false;
+    }
 }
